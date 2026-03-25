@@ -1,0 +1,32 @@
+{
+  "name": "mdm-lite",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/run-next.mjs dev",
+    "build": "next build",
+    "start": "node scripts/run-next.mjs start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:apply": "node scripts/apply-schema.mjs",
+    "db:import-demo": "node scripts/import-demo.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.511.0",
+    "next": "^15.3.0",
+    "pg": "^8.15.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@types/pg": "^8.11.11",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "eslint": "^9.23.0",
+    "eslint-config-next": "^15.3.0",
+    "typescript": "^5.8.3"
+  }
+}
