@@ -11,7 +11,7 @@ npm run dev
 # Run all tests
 npm run test:scan
 
-# Result: GO/NO_GO in ~30s
+# Result: GO/NO_GO in ~4-5 min
 # Report: reports/test-scan-latest.json
 ```
 
@@ -21,6 +21,7 @@ npm run test:scan
 All executable test scripts:
 - `scripts/e2e-nondestructive.mjs` - Core workflow validation
 - `scripts/e2e-client-asset-suite.mjs` - Comprehensive entity scenarios
+- `scripts/e2e-ui-workflows.mjs` - Browser-based admin and consumption workflow validation
 - `scripts/test-scanner.mjs` - Test orchestrator and reporter
 - `scripts/run-next.mjs` - Server launcher
 - `scripts/apply-schema.mjs` - Database schema setup
@@ -186,11 +187,36 @@ psql -d mdm_lite -c "DELETE FROM mdm_group_rule WHERE code LIKE 'CAS_%';"
 psql -d mdm_lite -c "DELETE FROM mdm_parameter WHERE code LIKE 'CAS_%';"
 ```
 
-### 4. Global Test Scanner
+### 4. Browser UI Workflow Suite
+**Command:** `npm run e2e:ui-workflows`
+
+**What it does:**
+- Validates user-visible browser flows against the live app
+- Covers login/logout, theme/language, help navigation, CRUD via UI, approvals, imports, audit, and protected-route behavior
+- Uses Playwright with Chromium and isolated UI-prefixed test records
+
+**Coverage:**
+- login, logout, and protected-route enforcement
+- mappings/groups/parameters create and approval flows
+- mapping non-destructive replacement via UI
+- import demo plus csv preview/confirm
+- help content for admin and platform usage
+
+**Expected output:**
+```bash
+ui_step_start=server-health
+...
+ui_step_ok=logout-and-protected-route
+```
+
+**Report output:**
+- `reports/e2e-ui-workflows-latest.json`
+
+### 5. Global Test Scanner
 **Command:** `npm run test:scan`
 
 **What it does:**
-- Orchestrates all three test suites
+- Orchestrates all four test suites
 - Validates server health first
 - Stops on first failure
 - Generates JSON report
@@ -203,8 +229,10 @@ psql -d mdm_lite -c "DELETE FROM mdm_parameter WHERE code LIKE 'CAS_%';"
    └─ npm run typecheck
 3. E2E Non-Destructive (9-10s)
    └─ npm run e2e:nondestructive
-4. E2E Client Asset (16-17s)
+4. E2E Client Asset (20-25s)
    └─ npm run e2e:client-asset
+5. E2E UI Workflows (3-4 min)
+  └─ npm run e2e:ui-workflows
 ```
 
 **Report output:**
@@ -217,7 +245,7 @@ psql -d mdm_lite -c "DELETE FROM mdm_parameter WHERE code LIKE 'CAS_%';"
     "ok": true,
     "error": null
   },
-  "totalDurationMs": 30000,
+  "totalDurationMs": 275000,
   "steps": [
     {
       "script": "typecheck",
@@ -236,6 +264,12 @@ psql -d mdm_lite -c "DELETE FROM mdm_parameter WHERE code LIKE 'CAS_%';"
       "code": 0,
       "ok": true,
       "durationMs": 16192
+    },
+    {
+      "script": "e2e:ui-workflows",
+      "code": 0,
+      "ok": true,
+      "durationMs": 211602
     }
   ]
 }
@@ -284,7 +318,8 @@ If all pass → **READY FOR DEMO/RELEASE**
 `.env` must contain:
 ```
 DATABASE_URL=postgresql://user:password@localhost/mdm_lite
-FALLBACK_ADMIN_EMAIL=admin@example.com
+APP_ADMIN_EMAIL=admin@example.com
+APP_ADMIN_PASSWORD=your-password
 ```
 
 Tests use these for:
@@ -383,7 +418,7 @@ Error: Unauthorized: admin_only_action
 ```
 
 **Solution:**
-Tests use ADMIN role by default. Check `.env` FALLBACK_ADMIN_EMAIL.
+Tests use ADMIN role by default. Check `.env` for `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD`.
 
 ### Test Data Left Behind
 ```

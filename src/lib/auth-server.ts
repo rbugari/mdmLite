@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { redirect } from "next/navigation";
 
 import { getSessionCookieName, verifySessionToken } from "@/lib/auth";
 import { query } from "@/lib/db";
@@ -43,4 +44,14 @@ export async function getAdminIdentity(): Promise<AdminIdentity | null> {
 
 export function unauthorizedResponse() {
   return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
+}
+
+export async function requireAdminPage(nextPath: string) {
+  const identity = await getAdminIdentity();
+
+  if (!identity) {
+    redirect(`/auth/login?next=${encodeURIComponent(nextPath)}`);
+  }
+
+  return identity;
 }

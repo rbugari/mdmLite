@@ -1,8 +1,10 @@
 import { ImportsConsole } from "@/components/imports-console";
+import { requireAdminPage } from "@/lib/auth-server";
 import { getCopy } from "@/lib/copy";
 import { getRequestPreferences } from "@/lib/request-preferences";
 
 export default async function ImportsPage() {
+  await requireAdminPage("/imports");
   const { language } = await getRequestPreferences();
   const t = getCopy(language).importsPage;
 

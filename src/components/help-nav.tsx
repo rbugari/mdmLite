@@ -12,6 +12,7 @@ export async function HelpNav({ currentPath }: HelpNavProps) {
   const t = getCopy(language).helpNav;
   const helpLinks = [
     { href: "/help", label: t.links.overview },
+    { href: "/help/demo", label: t.links.demo },
     { href: "/help/executive", label: t.links.executive },
     { href: "/help/functional", label: t.links.functional },
     { href: "/help/positioning", label: t.links.positioning },

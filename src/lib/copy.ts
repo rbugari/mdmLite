@@ -62,6 +62,20 @@ export const copy = {
           text: "Single-company MVP with one initial admin and a lightweight approval flow.",
         },
       ],
+      demoReset: {
+        eyebrow: "Guided Demo",
+        title: "Reset and load the teaching scenario",
+        description:
+          "Wipes operational rules and reloads a short, explainable story for CLIENT and PRODUCT, with approved records, pending approvals, and audit history.",
+        cta: "Load guided demo",
+        processing: "Loading demo...",
+        confirm:
+          "This will delete current operational mappings, groups, parameters, imports, and audit rows, then load the guided demo scenario. Continue?",
+        helpCta: "Open functional guide",
+        note: "Recommended before a live walkthrough, training, or first-contact session.",
+        success: "Guided demo loaded successfully.",
+        error: "Could not load the guided demo",
+      },
     },
     mappingsPage: {
       eyebrow: "Operational View",
@@ -223,6 +237,7 @@ export const copy = {
       ariaLabel: "Help sections",
       links: {
         overview: "Overview",
+        demo: "Guided demo",
         executive: "Executive FAQ",
         functional: "Functional Guide",
         positioning: "Positioning",
@@ -231,6 +246,11 @@ export const copy = {
     },
     helpOverview: {
       sections: [
+        {
+          title: "Guided demo",
+          href: "/help/demo",
+          text: "Step-by-step route to load the curated demo and explain the product alone from the browser, including what to click and what to observe.",
+        },
         {
           title: "Executive FAQ",
           href: "/help/executive",
@@ -260,6 +280,13 @@ export const copy = {
       ],
       audienceRoutes: [
         {
+          audience: "Enablement and demos",
+          title: "Start from the guided walkthrough",
+          text: "Lets one person load the demo dataset, open each screen in sequence, and explain the product without prior context.",
+          href: "/help/demo",
+          cta: "Open guided demo",
+        },
+        {
           audience: "Business and sponsors",
           title: "Start from value and scope",
           text: "Ideal for explaining quickly what problem it solves, why it is not enterprise MDM, and who it actually competes with.",
@@ -282,6 +309,7 @@ export const copy = {
         },
       ],
       quickStart: [
+        "Run a self-guided browser walkthrough: Guided demo.",
         "Understand the product in 3 minutes: Executive FAQ.",
         "Answer whether it competes with or complements Purview or Unity Catalog: Positioning.",
         "Show how it fits modern pipelines: Medallion and ELT.",
@@ -320,6 +348,131 @@ export const copy = {
       executiveLink: "View executive FAQ",
       functionalLink: "View functional guide",
       positioningLink: "View positioning",
+    },
+    helpDemo: {
+      eyebrow: "Help / Guided demo",
+      title: "Run the product demo step by step from this page",
+      description:
+        "This page is designed so a user can keep it open and navigate the product alone. It explains what to click, what to say, and what to look for in each screen.",
+      resetEyebrow: "Step 0",
+      resetTitle: "Load the guided dataset",
+      resetText:
+        "Use the button below before starting the walkthrough. It resets operational data and loads a short scenario for CLIENT and PRODUCT with approved rules, pending approvals, and audit history.",
+      goalEyebrow: "Demo goal",
+      goalTitle: "What this walkthrough proves",
+      goalBullets: [
+        "The product centralizes small but critical business rules instead of leaving them in Excel or code.",
+        "Business-friendly screens coexist with stable SQL contracts for data engineering consumption.",
+        "The same dataset shows approved rules, pending approvals, and audit traceability.",
+      ],
+      doTitle: "What to do",
+      lookTitle: "What to look for",
+      storyEyebrow: "Narrative",
+      storyTitle: "Story you can tell while navigating",
+      storyBullets: [
+        "CLIENT shows how several source names converge into a canonical customer used by downstream processes.",
+        "PRODUCT shows the same pattern for SKUs, product families, and operational parameters.",
+        "Approvals and Audit make the product credible because rules do not appear magically; they move through a simple governed flow.",
+      ],
+      sqlEyebrow: "Technical close",
+      sqlTitle: "Optional ending for Fabric, Databricks, or Snowflake audiences",
+      sqlText: "If the audience is technical, finish by showing that downstream processes only need the active views.",
+      sqlExample: `select entity_type_code, source_value, target_value
+from vw_mdm_mapping_rule_active
+order by entity_type_code, source_value;
+
+select entity_type_code, member_value, group_value
+from vw_mdm_group_rule_active
+order by entity_type_code, member_value;
+
+select parameter_key, parameter_value, parameter_scope_type, parameter_scope_value
+from vw_mdm_parameter_active
+where domain = 'demo_training'
+order by parameter_scope_type, parameter_scope_value;`,
+      secondaryCta: "Open approvals",
+      steps: [
+        {
+          kicker: "Step 1",
+          title: "Open Mappings and show canonicalization",
+          href: "/mappings",
+          cta: "Open mappings",
+          text: "Start with the most intuitive screen: two or more source names end in one canonical value.",
+          doItems: [
+            "Open the Mappings page.",
+            "Filter by ACME or COFFEE if you want a shorter view.",
+            "Point out CLIENT and PRODUCT examples side by side.",
+          ],
+          lookFor: [
+            "ACME S.A. and ACME SA both land on ACME_RETAIL.",
+            "CAF 1KG and CAFE MOLIDO 1KG both land on SKU_COFFEE_1KG.",
+          ],
+        },
+        {
+          kicker: "Step 2",
+          title: "Open Groups and show business segmentation",
+          href: "/groups",
+          cta: "Open groups",
+          text: "After canonicalization, the product can place customers or products into business-oriented groups.",
+          doItems: [
+            "Open the Groups page.",
+            "Locate ACME_RETAIL and SKU_COFFEE_1KG.",
+            "Explain that grouping feeds reporting, planning, and pricing logic.",
+          ],
+          lookFor: [
+            "ACME_RETAIL belongs to MODERN_TRADE.",
+            "SKU_COFFEE_1KG belongs to HOT_BEVERAGES.",
+          ],
+        },
+        {
+          kicker: "Step 3",
+          title: "Open Parameters and show operational rules",
+          href: "/parameters",
+          cta: "Open parameters",
+          text: "This screen shows values that processes use directly, such as commercial factors or minimum margins.",
+          doItems: [
+            "Open the Parameters page.",
+            "Filter by demo_training or PVP_FACTOR.",
+            "Compare a CLIENT-scoped parameter with a PRODUCT-scoped parameter.",
+          ],
+          lookFor: [
+            "ACME_RETAIL has a PVP_FACTOR.",
+            "SKU_COFFEE_1KG has a MIN_MARGIN.",
+          ],
+        },
+        {
+          kicker: "Step 4",
+          title: "Open Approvals and show pending work",
+          href: "/approvals",
+          cta: "Open approvals",
+          text: "This is where the product stops being a passive table browser and starts looking operational.",
+          doItems: [
+            "Open the Approvals page.",
+            "Show the pending mapping, group, and parameter created by the demo scenario.",
+            "Explain that these proposals do not affect active views until approval.",
+          ],
+          lookFor: [
+            "A pending ACME mapping proposal.",
+            "A pending PREMIUM_BEVERAGES product group.",
+            "A pending future PVP_FACTOR for ACME_RETAIL.",
+          ],
+        },
+        {
+          kicker: "Step 5",
+          title: "Open Audit and show traceability",
+          href: "/audit",
+          cta: "Open audit",
+          text: "Close the walkthrough by proving that every seeded rule has a visible operational history.",
+          doItems: [
+            "Open the Audit page.",
+            "Filter by mdm_mapping_rule or mdm_parameter if you want a tighter story.",
+            "Show create and approve or submit events.",
+          ],
+          lookFor: [
+            "Create plus approve events for approved demo records.",
+            "Create plus submit events for pending demo records.",
+          ],
+        },
+      ],
     },
     helpExecutive: {
       faqItems: [
@@ -757,6 +910,20 @@ export const copy = {
           text: "MVP monoempresa con un admin inicial y flujo liviano de aprobacion.",
         },
       ],
+      demoReset: {
+        eyebrow: "Demo Guiada",
+        title: "Resetear y cargar el escenario de capacitacion",
+        description:
+          "Borra las reglas operativas actuales y repone una historia corta y explicable para CLIENT y PRODUCT, con aprobados, pendientes y auditoria.",
+        cta: "Cargar demo guiada",
+        processing: "Cargando demo...",
+        confirm:
+          "Esto va a borrar mappings, groups, parameters, imports y auditoria operativa actuales, y luego va a cargar el escenario demo guiado. Queres continuar?",
+        helpCta: "Abrir guia funcional",
+        note: "Conviene usarlo antes de una demo en vivo, una capacitacion o una primera presentacion del producto.",
+        success: "Demo guiada cargada correctamente.",
+        error: "No se pudo cargar la demo guiada",
+      },
     },
     mappingsPage: {
       eyebrow: "Vista Operativa",
@@ -918,6 +1085,7 @@ export const copy = {
       ariaLabel: "Secciones Help",
       links: {
         overview: "Resumen",
+        demo: "Demo guiada",
         executive: "FAQ ejecutiva",
         functional: "Guia funcional",
         positioning: "Posicionamiento",
@@ -926,6 +1094,11 @@ export const copy = {
     },
     helpOverview: {
       sections: [
+        {
+          title: "Demo guiada",
+          href: "/help/demo",
+          text: "Recorrido paso a paso para cargar la demo curada y explicar el producto solo desde el navegador, incluyendo que hacer y que mirar.",
+        },
         {
           title: "FAQ ejecutiva",
           href: "/help/executive",
@@ -955,6 +1128,13 @@ export const copy = {
       ],
       audienceRoutes: [
         {
+          audience: "Capacitacion y demos",
+          title: "Entrar por el recorrido guiado",
+          text: "Permite que una persona cargue el dataset demo, abra cada pantalla en secuencia y explique el producto sin contexto previo.",
+          href: "/help/demo",
+          cta: "Abrir demo guiada",
+        },
+        {
           audience: "Negocio y sponsors",
           title: "Entrar por valor y alcance",
           text: "Ideal para explicar rapido que problema resuelve, por que no es un MDM enterprise y con quien compite de verdad.",
@@ -977,6 +1157,7 @@ export const copy = {
         },
       ],
       quickStart: [
+        "Hacer una demo autoguiada desde el navegador: Demo guiada.",
         "Entender el producto en 3 minutos: FAQ ejecutiva.",
         "Responder si compite o complementa a Purview o Unity Catalog: Posicionamiento.",
         "Mostrar encaje en pipelines modernos: Medallion y ELT.",
@@ -1015,6 +1196,131 @@ export const copy = {
       executiveLink: "Ver FAQ ejecutiva",
       functionalLink: "Ver guia funcional",
       positioningLink: "Ver posicionamiento",
+    },
+    helpDemo: {
+      eyebrow: "Help / Demo guiada",
+      title: "Correr la demo del producto paso a paso desde esta pagina",
+      description:
+        "Esta pagina esta pensada para que una persona la deje abierta y navegue el producto sola. Explica que tocar, que decir y que deberia observar en cada pantalla.",
+      resetEyebrow: "Paso 0",
+      resetTitle: "Cargar el dataset guiado",
+      resetText:
+        "Usa el boton de abajo antes de empezar. Resetea los datos operativos y carga un escenario corto para CLIENT y PRODUCT con reglas aprobadas, pendientes y auditoria.",
+      goalEyebrow: "Objetivo",
+      goalTitle: "Que demuestra este recorrido",
+      goalBullets: [
+        "El producto centraliza reglas de negocio chicas pero criticas en vez de dejarlas en Excel o codigo.",
+        "Las pantallas amigables para negocio conviven con contratos SQL estables para consumo tecnico.",
+        "El mismo dataset permite mostrar aprobados, pendientes y trazabilidad operativa.",
+      ],
+      doTitle: "Que hacer",
+      lookTitle: "Que mirar",
+      storyEyebrow: "Narrativa",
+      storyTitle: "Historia que puedes contar mientras navegas",
+      storyBullets: [
+        "CLIENT muestra como varios nombres de origen convergen en un cliente canonico que luego usan los procesos downstream.",
+        "PRODUCT muestra el mismo patron para SKU, familias de producto y parametros operativos.",
+        "Approvals y Audit vuelven creible el producto porque las reglas no aparecen por magia: pasan por un flujo simple y gobernado.",
+      ],
+      sqlEyebrow: "Cierre tecnico",
+      sqlTitle: "Cierre opcional para audiencias de Fabric, Databricks o Snowflake",
+      sqlText: "Si la audiencia es tecnica, termina mostrando que los procesos downstream solo necesitan las vistas activas.",
+      sqlExample: `select entity_type_code, source_value, target_value
+from vw_mdm_mapping_rule_active
+order by entity_type_code, source_value;
+
+select entity_type_code, member_value, group_value
+from vw_mdm_group_rule_active
+order by entity_type_code, member_value;
+
+select parameter_key, parameter_value, parameter_scope_type, parameter_scope_value
+from vw_mdm_parameter_active
+where domain = 'demo_training'
+order by parameter_scope_type, parameter_scope_value;`,
+      secondaryCta: "Abrir aprobaciones",
+      steps: [
+        {
+          kicker: "Paso 1",
+          title: "Abrir Equivalencias y mostrar la canonizacion",
+          href: "/mappings",
+          cta: "Abrir equivalencias",
+          text: "Empieza por la pantalla mas intuitiva: dos o mas nombres de origen terminan en un mismo valor canonico.",
+          doItems: [
+            "Abrir la pagina de Equivalencias.",
+            "Filtrar por ACME o COFFEE si quieres una vista mas corta.",
+            "Mostrar ejemplos de CLIENT y PRODUCT lado a lado.",
+          ],
+          lookFor: [
+            "ACME S.A. y ACME SA caen en ACME_RETAIL.",
+            "CAF 1KG y CAFE MOLIDO 1KG caen en SKU_COFFEE_1KG.",
+          ],
+        },
+        {
+          kicker: "Paso 2",
+          title: "Abrir Agrupaciones y mostrar segmentacion de negocio",
+          href: "/groups",
+          cta: "Abrir agrupaciones",
+          text: "Despues de canonizar, el producto puede ubicar clientes o productos dentro de grupos orientados al negocio.",
+          doItems: [
+            "Abrir la pagina de Agrupaciones.",
+            "Ubicar ACME_RETAIL y SKU_COFFEE_1KG.",
+            "Explicar que esta capa alimenta reporting, planeamiento y pricing.",
+          ],
+          lookFor: [
+            "ACME_RETAIL pertenece a MODERN_TRADE.",
+            "SKU_COFFEE_1KG pertenece a HOT_BEVERAGES.",
+          ],
+        },
+        {
+          kicker: "Paso 3",
+          title: "Abrir Parametros y mostrar reglas operativas",
+          href: "/parameters",
+          cta: "Abrir parametros",
+          text: "Esta pantalla muestra valores que los procesos usan directo, como factores comerciales o margenes minimos.",
+          doItems: [
+            "Abrir la pagina de Parametros.",
+            "Filtrar por demo_training o PVP_FACTOR.",
+            "Comparar un parametro con alcance CLIENT y otro con alcance PRODUCT.",
+          ],
+          lookFor: [
+            "ACME_RETAIL tiene un PVP_FACTOR.",
+            "SKU_COFFEE_1KG tiene un MIN_MARGIN.",
+          ],
+        },
+        {
+          kicker: "Paso 4",
+          title: "Abrir Aprobaciones y mostrar trabajo pendiente",
+          href: "/approvals",
+          cta: "Abrir aprobaciones",
+          text: "Aca el producto deja de parecer un visor de tablas y empieza a verse operativo.",
+          doItems: [
+            "Abrir la pagina de Aprobaciones.",
+            "Mostrar la equivalencia, agrupacion y parametro pendientes que dejo la demo.",
+            "Explicar que estas propuestas no impactan vistas activas hasta aprobarse.",
+          ],
+          lookFor: [
+            "Una propuesta pendiente de equivalencia para ACME.",
+            "Una agrupacion pendiente PREMIUM_BEVERAGES para producto.",
+            "Un PVP_FACTOR futuro pendiente para ACME_RETAIL.",
+          ],
+        },
+        {
+          kicker: "Paso 5",
+          title: "Abrir Auditoria y mostrar trazabilidad",
+          href: "/audit",
+          cta: "Abrir auditoria",
+          text: "Cierra el recorrido probando que cada regla demo tiene historia operativa visible.",
+          doItems: [
+            "Abrir la pagina de Auditoria.",
+            "Filtrar por mdm_mapping_rule o mdm_parameter si quieres una historia mas corta.",
+            "Mostrar eventos de create y approve o create y submit.",
+          ],
+          lookFor: [
+            "Eventos create y approve para registros demo aprobados.",
+            "Eventos create y submit para registros demo pendientes.",
+          ],
+        },
+      ],
     },
     helpExecutive: {
       faqItems: [

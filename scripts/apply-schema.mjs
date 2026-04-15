@@ -40,6 +40,24 @@ function loadEnvFile(filePath) {
   }
 }
 
+function getSslConfig() {
+  const sslMode = process.env.DATABASE_SSL_MODE ?? "require";
+
+  if (sslMode === "disable") {
+    return undefined;
+  }
+
+  if (sslMode === "no-verify") {
+    return {
+      rejectUnauthorized: false,
+    };
+  }
+
+  return {
+    rejectUnauthorized: true,
+  };
+}
+
 loadEnvFile(envPath);
 
 if (!process.env.DATABASE_URL) {
@@ -56,9 +74,7 @@ const sql = fs.readFileSync(schemaPath, "utf8");
 
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: getSslConfig(),
 });
 
 try {

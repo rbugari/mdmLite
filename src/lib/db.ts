@@ -10,13 +10,27 @@ export function getDatabaseUrl(): string {
   return env.DATABASE_URL;
 }
 
+function getSslConfig() {
+  if (env.DATABASE_SSL_MODE === "disable") {
+    return undefined;
+  }
+
+  if (env.DATABASE_SSL_MODE === "no-verify") {
+    return {
+      rejectUnauthorized: false,
+    };
+  }
+
+  return {
+    rejectUnauthorized: true,
+  };
+}
+
 export function getPool(): Pool {
   if (!global.__mdmPool) {
     global.__mdmPool = new Pool({
       connectionString: getDatabaseUrl(),
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      ssl: getSslConfig(),
       max: 10,
     });
   }
@@ -36,5 +50,6 @@ export async function checkDatabaseHealth() {
     ok: true,
     latencyMs: Date.now() - startedAt,
     serverTime: result.rows[0]?.now ?? null,
+    sslMode: env.DATABASE_SSL_MODE,
   };
 }

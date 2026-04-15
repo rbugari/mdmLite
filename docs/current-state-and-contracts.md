@@ -6,15 +6,19 @@ Describe the real current state of MDM Lite, aligned with what is implemented to
 
 ## Real Current State
 
-MDM Lite currently provides a demonstrable v0.1 foundation with:
+MDM Lite currently provides a usable v2 MVP with:
 
-1. home page and contextual help
+1. authenticated admin access for operational pages
 2. manual create and edit flows for mappings, groups, and parameters
-3. demo and file-based import flows
-4. PostgreSQL-backed persistence
-5. active SQL views for technical consumption
-6. DB health endpoint
-7. bilingual UI copy and lightweight operational navigation
+3. approval queue with approve, reject, and inactivate actions
+4. non-destructive replacement of approved records
+5. audit trail screen and change log persistence
+6. demo and file-based import flows with preview and confirmation
+7. PostgreSQL-backed persistence
+8. active SQL views for technical consumption
+9. contextual Help for both administration and technical/platform consumption
+10. DB health endpoint
+11. bilingual UI copy and lightweight operational navigation
 
 ## What Is Implemented Today
 
@@ -24,20 +28,34 @@ MDM Lite currently provides a demonstrable v0.1 foundation with:
 2. mappings
 3. groups
 4. parameters
-5. imports
-6. help
+5. approvals
+6. audit
+7. auth/login
+8. help
+9. help/functional
+10. help/positioning
+11. help/platforms
+12. help/executive
+13. imports
 
 ### API surface
 
-1. `GET/POST /api/mappings`
-2. `PUT /api/mappings/[id]`
-3. `GET/POST /api/groups`
-4. `PUT /api/groups/[id]`
-5. `GET/POST /api/parameters`
-6. `PUT /api/parameters/[id]`
-7. `POST /api/imports/demo`
-8. `POST /api/imports/upload`
-9. `GET /api/health/db`
+1. `POST /api/auth/login`
+2. `POST /api/auth/logout`
+3. `GET /api/auth/me`
+4. `GET/POST /api/mappings`
+5. `PUT /api/mappings/[id]`
+6. `GET/POST /api/groups`
+7. `PUT /api/groups/[id]`
+8. `GET/POST /api/parameters`
+9. `PUT /api/parameters/[id]`
+10. `GET /api/workflow/pending`
+11. `POST /api/workflow/transition`
+12. `POST /api/imports/demo`
+13. `POST /api/imports/upload/preview`
+14. `POST /api/imports/upload/confirm`
+15. `GET /api/health/db`
+16. `GET /api/audit`
 
 ### Database foundation
 
@@ -72,54 +90,48 @@ The current contract assumption is:
 1. simple end-to-end demonstrable product
 2. portable PostgreSQL model
 3. lightweight admin UX
-4. import path for initial data load
-5. stable read direction for technical consumers
-6. clear product boundary and positioning
+4. approval, audit, and non-destructive governance already operating
+5. import path for both demo load and user-driven csv/xlsx load
+6. stable read direction for technical consumers
+7. contextual Help for business, admin, and platform audiences
+8. clear product boundary and positioning
 
 ## Current Gaps
 
-These are important because they define the next roadmap, not because the current foundation is invalid.
+These define the next roadmap, not the validity of the current MVP.
 
 ### Governance gaps
 
-1. no real authentication flow
-2. no real role-based authorization flow
-3. no approval workflow in operation
-4. no visible audit experience in UI
-5. no non-destructive versioning of approved records
-
-### Import gaps
-
-1. no preview before confirmation
-2. no batch review UI
-3. import batch tables exist but are not fully used end to end
-4. no documentation-driven candidate extraction yet
-
-### UX gaps
-
-1. no pending approval queue
-2. no audit screen
-3. no richer filtering by state, validity, entity, or domain
-4. no pagination
+1. authentication is still single-admin oriented, not enterprise IAM
+2. authorization is admin-focused, not full multi-role RBAC
+3. there is no delegated stewardship workflow by domain or team
 
 ### Product gaps
 
-1. current writes are tied to a narrow client rule context
-2. current parameter handling is still limited
-3. no candidate review flow for suggested rules
+1. current writes are still optimized for a single-company reference domain model
+2. there is no candidate inbox for semi-automated rule discovery
+3. there is no public, supported write API for external applications
+4. there is no multi-tenant or multi-company operating model
 
-## Functional Contract For v0.1 Baseline
+### Platform gaps
 
-For the current baseline, MDM Lite should be treated as:
+1. Help shows platform consumption patterns, but there are no packaged connectors for Fabric, Databricks, or Snowflake
+2. technical consumption is SQL-view based, not event-driven or CDC-driven
 
-1. manual rule administration plus import
-2. active SQL consumption for downstreams
-3. operational foundation ready for the next governance iteration
+## Functional Contract For v2 MVP
+
+For the current MVP, MDM Lite should be treated as:
+
+1. admin-managed rule administration through UI
+2. governed approval workflow with audit trail
+3. import-driven and manual data entry
+4. active SQL consumption for downstream technical processes
+5. contextual product help for both administration and platform consumption
 
 It should not yet be treated as:
 
-1. full approval workflow product
-2. authenticated public API
+1. enterprise IAM or enterprise RBAC product
+2. authenticated public write API for third parties
 3. autonomous rule extraction engine
 4. multi-tenant or multi-company platform
 
@@ -130,6 +142,23 @@ Current entry modes are:
 1. manual create/edit
 2. demo workbook import
 3. uploaded csv/xlsx import
+
+## Technical Consumption Contract
+
+The intended downstream usage is:
+
+1. ETL, ELT, SQL, dbt, notebooks, or pipelines read from `vw_mdm_mapping_rule_active`
+2. grouping logic reads from `vw_mdm_group_rule_active`
+3. scoped parameters read from `vw_mdm_parameter_active`
+4. downstreams should not couple directly to internal write tables unless they are doing administration or diagnostics
+
+## Help Coverage
+
+The current Help set covers both sides of the MVP:
+
+1. administration and day-to-day operation from the Functional Guide
+2. product positioning and scope from the Executive and Positioning sections
+3. technical/platform consumption examples for SQL, Python, dbt, Databricks, Fabric, Snowflake, medallion, and ELT from the Platforms section
 
 Future entry modes may include:
 

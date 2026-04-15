@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
+import { createId } from "@/lib/ids";
 
 const updateGroupSchema = z.object({
   memberValue: z.string().min(1, "Member value is required."),
@@ -53,9 +54,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const current = currentResult.rows[0];
 
     if (current.status === "approved") {
+      const replacementRecordId = createId();
       const replacementResult = await query<{ id: string }>(
         `
           insert into mdm_group_rule (
+            id,
             rule_set_id,
             entity_type_id,
             member_value,
@@ -68,10 +71,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             created_by,
             updated_by
           )
-          values ($1, $2, $3, $4, $4, $5, 'pending_approval', true, $6, $7, $7)
+          values ($1, $2, $3, $4, $5, $5, $6, 'pending_approval', true, $7, $8, $8)
           returning id::text
         `,
         [
+          replacementRecordId,
           current.rule_set_id,
           current.entity_type_id,
           payload.memberValue,
@@ -95,9 +99,10 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             changed_by,
             comments
           )
-          values ('mdm_group_rule', $1, 'update', $2::jsonb, $3::jsonb, $4, $5)
+          values ($1, 'mdm_group_rule', $2, 'update', $3::jsonb, $4::jsonb, $5, $6)
         `,
         [
+          createId(),
           replacementId ?? id,
           JSON.stringify({
             replacedRecordId: current.id,
@@ -122,7 +127,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ ok: true, mode: "non_destructive_replacement", replacementId });
     }
 
-    const result = await query<{ id: string }>(
+      await query<{ id: string }>(
       `
         update mdm_group_rule
         set
@@ -143,6 +148,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     await query(
       `
         insert into mdm_change_log (
+          id,
           table_name,
           record_id,
           action_type,
@@ -150,9 +156,10 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
           changed_by,
           comments
         )
-        values ('mdm_group_rule', $1, 'update', $2::jsonb, $3, $4)
+        values ($1, 'mdm_group_rule', $2, 'update', $3::jsonb, $4, $5)
       `,
       [
+        createId(),
         id,
         JSON.stringify({
           previousStatus: current.status,

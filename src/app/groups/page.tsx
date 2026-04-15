@@ -2,6 +2,7 @@ import { DataFilterForm } from "@/components/data-filter-form";
 import { GroupCreateForm } from "@/components/group-create-form";
 import { GroupEditTable } from "@/components/group-edit-table";
 import { PaginationControls } from "@/components/pagination-controls";
+import { requireAdminPage } from "@/lib/auth-server";
 import { getCopy } from "@/lib/copy";
 import { getActiveGroups } from "@/lib/mdm";
 import { getRequestPreferences } from "@/lib/request-preferences";
@@ -17,6 +18,7 @@ type GroupsPageProps = {
 };
 
 export default async function GroupsPage({ searchParams }: GroupsPageProps) {
+  await requireAdminPage("/groups");
   const params = (await searchParams) ?? {};
   const search = params.q?.trim() ?? "";
   const page = Number(params.page ?? "1");

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
+import { createId } from "@/lib/ids";
 import { getDefaultClientRuleContext } from "@/lib/mdm-write-context";
 
 type MappingRow = {
@@ -72,10 +73,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const payload = createMappingSchema.parse(body);
     const context = await getDefaultClientRuleContext();
+    const mappingId = createId();
 
     const writeResult = await query<{ id: string }>(
       `
         insert into mdm_mapping_rule (
+          id,
           rule_set_id,
           entity_type_id,
           source_key,
@@ -90,7 +93,7 @@ export async function POST(request: Request) {
           created_by,
           updated_by
         )
-        values ($1, $2, 'customer_name', $3, $4, $4, 100, $5, 'pending_approval', true, $6, $7, $7)
+        values ($1, $2, $3, 'customer_name', $4, $5, $5, 100, $6, 'pending_approval', true, $7, $8, $8)
         on conflict (rule_set_id, entity_type_id, source_key, source_value, valid_from)
         do update set
           target_value = excluded.target_value,
@@ -103,6 +106,7 @@ export async function POST(request: Request) {
         returning id
       `,
       [
+        mappingId,
         context.ruleSetId,
         context.entityTypeId,
         payload.sourceValue,
@@ -124,9 +128,10 @@ export async function POST(request: Request) {
             changed_by,
             comments
           )
-          values ('mdm_mapping_rule', $1, 'create', $2::jsonb, $3, $4)
+            values ($1, 'mdm_mapping_rule', $2, 'create', $3::jsonb, $4, $5)
         `,
         [
+            createId(),
           writeResult.rows[0].id,
           JSON.stringify({ sourceValue: payload.sourceValue, targetValue: payload.targetValue, validFrom: payload.validFrom }),
           identity.userId,

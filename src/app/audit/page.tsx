@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth-server";
 import { query } from "@/lib/db";
 
 type AuditPageProps = {
@@ -20,6 +21,7 @@ type AuditItem = {
 };
 
 export default async function AuditPage({ searchParams }: AuditPageProps) {
+  await requireAdminPage("/audit");
   const params = (await searchParams) ?? {};
   const table = params.table?.trim() ?? "";
   const action = params.action?.trim() ?? "";

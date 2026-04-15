@@ -1,21 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Languages, Moon, Sun } from "lucide-react";
 
 import { getCopy } from "@/lib/copy";
 import { useUiPreferences } from "@/components/ui-preferences-provider";
 
 export function SiteHeader() {
-  const router = useRouter();
   const { language, theme, setLanguage, toggleTheme } = useUiPreferences();
   const t = getCopy(language).header;
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/auth/login");
-    router.refresh();
+    window.location.assign("/auth/login");
   }
 
   return (

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
+import { createId } from "@/lib/ids";
 
 const transitionSchema = z.object({
   entity: z.enum(["mapping", "group", "parameter"]),
@@ -107,6 +108,7 @@ async function closePreviousApprovedVersions(
       await query(
         `
           insert into mdm_change_log (
+            id,
             table_name,
             record_id,
             action_type,
@@ -118,9 +120,10 @@ async function closePreviousApprovedVersions(
             approval_at,
             comments
           )
-          values ('mdm_mapping_rule', $1, 'inactivate', $2::jsonb, $3::jsonb, $4, 'inactive', $4, current_timestamp, $5)
+          values ($1, 'mdm_mapping_rule', $2, 'inactivate', $3::jsonb, $4::jsonb, $5, 'inactive', $5, current_timestamp, $6)
         `,
         [
+          createId(),
           closed.id,
           JSON.stringify({ status: "approved" }),
           JSON.stringify({ status: "inactive", reason: "superseded" }),
@@ -199,6 +202,7 @@ async function closePreviousApprovedVersions(
       await query(
         `
           insert into mdm_change_log (
+            id,
             table_name,
             record_id,
             action_type,
@@ -210,9 +214,10 @@ async function closePreviousApprovedVersions(
             approval_at,
             comments
           )
-          values ('mdm_group_rule', $1, 'inactivate', $2::jsonb, $3::jsonb, $4, 'inactive', $4, current_timestamp, $5)
+          values ($1, 'mdm_group_rule', $2, 'inactivate', $3::jsonb, $4::jsonb, $5, 'inactive', $5, current_timestamp, $6)
         `,
         [
+          createId(),
           closed.id,
           JSON.stringify({ status: "approved" }),
           JSON.stringify({ status: "inactive", reason: "superseded" }),
@@ -294,6 +299,7 @@ async function closePreviousApprovedVersions(
     await query(
       `
         insert into mdm_change_log (
+          id,
           table_name,
           record_id,
           action_type,
@@ -305,9 +311,10 @@ async function closePreviousApprovedVersions(
           approval_at,
           comments
         )
-        values ('mdm_parameter', $1, 'inactivate', $2::jsonb, $3::jsonb, $4, 'inactive', $4, current_timestamp, $5)
+        values ($1, 'mdm_parameter', $2, 'inactivate', $3::jsonb, $4::jsonb, $5, 'inactive', $5, current_timestamp, $6)
       `,
       [
+        createId(),
         closed.id,
         JSON.stringify({ status: "approved" }),
         JSON.stringify({ status: "inactive", reason: "superseded" }),
@@ -378,6 +385,7 @@ export async function POST(request: Request) {
     await query(
       `
         insert into mdm_change_log (
+          id,
           table_name,
           record_id,
           action_type,
@@ -389,9 +397,10 @@ export async function POST(request: Request) {
           approval_at,
           comments
         )
-        values ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8, current_timestamp, $9)
+        values ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, $9, current_timestamp, $10)
       `,
       [
+        createId(),
         tableName,
         payload.id,
         payload.action,

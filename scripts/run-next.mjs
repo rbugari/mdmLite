@@ -42,6 +42,7 @@ loadEnvFile(envPath);
 const command = process.argv[2];
 const port = process.env.APP_PORT ?? "3003";
 const nextBin = path.join(rootDir, "node_modules", ".bin", process.platform === "win32" ? "next.cmd" : "next");
+const standaloneServer = path.join(rootDir, ".next", "standalone", "server.js");
 
 if (!command || !["dev", "start"].includes(command)) {
   console.error("Usage: node scripts/run-next.mjs <dev|start>");
@@ -54,13 +55,22 @@ if (!fs.existsSync(nextBin)) {
 }
 
 const child =
-  process.platform === "win32"
-    ? spawn("cmd.exe", ["/c", nextBin, command, "-p", port], {
+  command === "start" && fs.existsSync(standaloneServer)
+    ? spawn(process.execPath, [standaloneServer], {
         cwd: rootDir,
         stdio: "inherit",
-        env: process.env,
+        env: {
+          ...process.env,
+          PORT: port,
+        },
       })
-    : spawn(nextBin, [command, "-p", port], {
+    : process.platform === "win32"
+      ? spawn("cmd.exe", ["/c", nextBin, command, "-p", port], {
+          cwd: rootDir,
+          stdio: "inherit",
+          env: process.env,
+        })
+      : spawn(nextBin, [command, "-p", port], {
         cwd: rootDir,
         stdio: "inherit",
         env: process.env,

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
+import { createId } from "@/lib/ids";
 
 type ParameterRow = {
   id: string;
@@ -71,10 +72,12 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const payload = createParameterSchema.parse(body);
+    const parameterId = createId();
 
     const writeResult = await query<{ id: string }>(
       `
         insert into mdm_parameter (
+          id,
           parameter_key,
           parameter_value,
           data_type,
@@ -88,7 +91,7 @@ export async function POST(request: Request) {
           created_by,
           updated_by
         )
-        values ($1, $2, 'numeric', $3, $4, $5, $6, 'pending_approval', true, $7, $8, $8)
+        values ($1, $2, $3, 'numeric', $4, $5, $6, $7, 'pending_approval', true, $8, $9, $9)
         on conflict (parameter_key, domain, parameter_scope_type, parameter_scope_value, valid_from)
         do update set
           parameter_value = excluded.parameter_value,
@@ -100,6 +103,7 @@ export async function POST(request: Request) {
         returning id
       `,
       [
+        parameterId,
         payload.parameterKey,
         payload.parameterValue,
         payload.domain,
@@ -122,9 +126,10 @@ export async function POST(request: Request) {
             changed_by,
             comments
           )
-          values ('mdm_parameter', $1, 'create', $2::jsonb, $3, $4)
+            values ($1, 'mdm_parameter', $2, 'create', $3::jsonb, $4, $5)
         `,
         [
+            createId(),
           writeResult.rows[0].id,
           JSON.stringify({
             parameterKey: payload.parameterKey,

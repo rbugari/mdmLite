@@ -2,6 +2,7 @@ import { DataFilterForm } from "@/components/data-filter-form";
 import { PaginationControls } from "@/components/pagination-controls";
 import { ParameterCreateForm } from "@/components/parameter-create-form";
 import { ParameterEditTable } from "@/components/parameter-edit-table";
+import { requireAdminPage } from "@/lib/auth-server";
 import { getCopy } from "@/lib/copy";
 import { getActiveParameters } from "@/lib/mdm";
 import { getRequestPreferences } from "@/lib/request-preferences";
@@ -17,6 +18,7 @@ type ParametersPageProps = {
 };
 
 export default async function ParametersPage({ searchParams }: ParametersPageProps) {
+  await requireAdminPage("/parameters");
   const params = (await searchParams) ?? {};
   const search = params.q?.trim() ?? "";
   const page = Number(params.page ?? "1");

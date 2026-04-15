@@ -2,6 +2,7 @@ import { DataFilterForm } from "@/components/data-filter-form";
 import { MappingCreateForm } from "@/components/mapping-create-form";
 import { MappingEditTable } from "@/components/mapping-edit-table";
 import { PaginationControls } from "@/components/pagination-controls";
+import { requireAdminPage } from "@/lib/auth-server";
 import { getCopy } from "@/lib/copy";
 import { getActiveMappings } from "@/lib/mdm";
 import { getRequestPreferences } from "@/lib/request-preferences";
@@ -17,6 +18,7 @@ type MappingsPageProps = {
 };
 
 export default async function MappingsPage({ searchParams }: MappingsPageProps) {
+  await requireAdminPage("/mappings");
   const params = (await searchParams) ?? {};
   const search = params.q?.trim() ?? "";
   const page = Number(params.page ?? "1");

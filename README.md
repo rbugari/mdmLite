@@ -4,6 +4,15 @@
 
 Reference Data Manager (RDM) for centralized governance of business equivalences, groupings, and parameters with complete audit trail, approval workflow, and non-destructive change management.
 
+## Current Technical Focus
+
+Feature work is currently paused while the project is hardened for a first installable release. The active foundation target is:
+
+- standard PostgreSQL without mandatory extensions
+- remote customer-owned database support
+- Windows-first installation path
+- web application delivery, not desktop rewrite
+
 ## 🎯 Quick Start
 
 ```bash
@@ -18,9 +27,41 @@ npm run dev               # Start dev server (http://localhost:3003)
 npm run test:scan         # Full suite validation (GO/NO_GO)
 npm run e2e:nondestructive  # Core workflow tests
 npm run e2e:client-asset   # Comprehensive entity scenarios
+npm run e2e:ui-workflows   # Browser-visible admin workflows
+
+# Demo / training
+npm run demo:reset        # Wipe operational data and seed a didactic scenario
 ```
 
-**Expected:** Server ready in ~3s, full test suite in ~30s
+**Expected:** Server ready in ~3s, full validation suite in ~4-5 min
+
+For a short, explainable product walkthrough, use `npm run demo:reset` and then follow [data/demo/didactic-scenario.md](data/demo/didactic-scenario.md).
+
+## Windows-First Install
+
+For the first installable path on Windows, use the batch scripts under `scripts/windows`:
+
+```bat
+scripts\windows\install-and-start.bat
+scripts\windows\configure-production.bat
+scripts\windows\install-production.bat
+scripts\windows\start-production.bat
+scripts\windows\smoke-test.bat
+```
+
+What each step does:
+
+- `install-and-start.bat` is the simplest first-run entrypoint: it configures if needed, installs, builds, and starts the app.
+- `configure-production.bat` creates or repairs `.env` interactively from a guided prompt.
+- `install-production.bat` validates `.env`, installs dependencies, applies the PostgreSQL schema, and creates a production build.
+- `start-production.bat` starts the already-built standalone server on `APP_PORT`.
+- `smoke-test.bat` calls the homepage and `/api/health/db` to confirm the app is running and the database is reachable.
+
+If you want the easiest first try, run only `scripts\windows\install-and-start.bat`.
+
+`install-production.bat` now opens the configurator automatically when `.env` is missing or invalid, so the first-run flow is already “configure + install” without editing files by hand.
+
+This is the current supported packaging baseline for customer-hosted trials on Windows. It is intentionally simple: Node.js + guided `.env` bootstrap + PostgreSQL + batch launchers.
 
 ## 📋 Project Status (v2)
 
@@ -31,7 +72,7 @@ npm run e2e:client-asset   # Comprehensive entity scenarios
 | 3 | Import Preview & List Operations | ✅ Complete |
 | 4 | Future Contract Documentation | ✅ Complete |
 
-**Sign-off Date:** 2026-04-15 | **Test Suite:** GO | **Last Run:** 30.5s
+**Sign-off Date:** 2026-04-15 | **Test Suite:** GO | **Last Run:** 275.0s
 
 See [docs/prd-v2-operational-hardening.md](docs/prd-v2-operational-hardening.md) for detailed v2 specification and sign-off.
 
@@ -125,11 +166,11 @@ MDM_Lite/
   - `vw_mdm_group_rule_active`
   - `vw_mdm_parameter_active`
 - ✅ **Change log:** Audit table for compliance (change_log.entity, actor, action, timestamp)
-- ✅ **Authentication:** FALLBACK_ADMIN_EMAIL for runtime resolution
+- ✅ **Authentication:** `APP_ADMIN_EMAIL` + `APP_ADMIN_PASSWORD` for admin runtime access
 
 ## 🧪 Testing Infrastructure
 
-**Three-tier test pyramid:**
+**Four-layer validation stack:**
 
 1. **Type Check** (~2.6s)
    ```bash
@@ -145,11 +186,17 @@ MDM_Lite/
    - 3 import scenarios (valid, token reuse, invalid)
    - Auto-cleanup (CAS_ prefixed records)
 
+4. **Browser UI Workflows** (~3.5m)
+   - Login/logout and protected route behavior
+   - Theme/language switching
+   - Manual create/edit/approve flows via browser
+   - Help navigation and import console
+
 **Global Validator:**
 ```bash
 npm run test:scan
 # Output: GO/NO_GO + JSON report (reports/test-scan-latest.json)
-# Expected: ~30s, all steps pass
+# Expected: ~4-5 min, all steps pass
 ```
 
 ### Test Data
@@ -172,8 +219,15 @@ For detailed testing guide, see [docs/testing/README.md](docs/testing/README.md)
 Create `.env`:
 ```
 DATABASE_URL=postgresql://user:pass@localhost/mdm_lite
-FALLBACK_ADMIN_EMAIL=admin@example.com
+DATABASE_SSL_MODE=disable
+APP_ADMIN_EMAIL=admin@example.com
+APP_ADMIN_PASSWORD=change-this-password
+APP_AUTH_SECRET=change-this-secret-now
 ```
+
+`DATABASE_SSL_MODE` supports `disable`, `require`, and `no-verify`. Use `require` for managed PostgreSQL with valid certificates, `disable` for local trusted setups, and `no-verify` only for temporary compatibility tests.
+
+If the production smoke test reports `self-signed certificate in certificate chain`, the current database endpoint is not presenting a certificate chain that Node.js can validate under `require`. In that case, fix the certificate path or use `no-verify` only as a temporary controlled fallback.
 
 ### Common Commands
 
@@ -181,6 +235,10 @@ FALLBACK_ADMIN_EMAIL=admin@example.com
 # Database
 npm run db:apply          # Initialize schema
 npm run db:import-demo    # Load demo data
+
+# Runtime validation
+npm run env:check         # Validate required runtime env vars
+npm run smoke:prod        # Smoke test against a running app
 
 # Development
 npm run dev              # Start server + watch
@@ -192,6 +250,7 @@ npm run lint             # ESLint check
 npm run typecheck                 # TypeScript validation
 npm run e2e:nondestructive       # Core workflows
 npm run e2e:client-asset         # Comprehensive tests
+npm run e2e:ui-workflows         # Browser-visible workflows
 npm run test:scan                # Full suite + report
 ```
 

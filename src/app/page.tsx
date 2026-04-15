@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Database, FileSpreadsheet, Network, ShieldCheck } from "lucide-react";
 
+import { DemoResetButton } from "@/components/demo-reset-button";
+import { requireAdminPage } from "@/lib/auth-server";
 import { appConfig } from "@/lib/app-config";
 import { getCopy } from "@/lib/copy";
 import { getDashboardStats } from "@/lib/mdm";
@@ -9,6 +11,7 @@ import { getRequestPreferences } from "@/lib/request-preferences";
 const cardIcons = [Database, FileSpreadsheet, Network, ShieldCheck];
 
 export default async function HomePage() {
+  await requireAdminPage("/");
   const stats = await getDashboardStats();
   const { language } = await getRequestPreferences();
   const t = getCopy(language).home;
@@ -57,6 +60,8 @@ export default async function HomePage() {
               <span>{t.statLabels.parameters}</span>
             </div>
           </div>
+
+          <DemoResetButton />
         </div>
       </section>
 

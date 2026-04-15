@@ -1,6 +1,7 @@
 import * as xlsx from "xlsx";
 
 import { query } from "@/lib/db";
+import { createId } from "@/lib/ids";
 
 const defaultValidFrom = "2024-01-01";
 
@@ -194,6 +195,7 @@ export async function importMappingRows(rows: Record<string, unknown>[]) {
     await query(
       `
         insert into mdm_mapping_rule (
+          id,
           rule_set_id,
           entity_type_id,
           source_key,
@@ -208,7 +210,7 @@ export async function importMappingRows(rows: Record<string, unknown>[]) {
           created_by,
           updated_by
         )
-        values ($1, $2, $3, $4, $5, $6, 100, $7, 'approved', $8, $9, $10, $10)
+        values ($1, $2, $3, $4, $5, $6, $7, 100, $8, 'approved', $9, $10, $11, $11)
         on conflict (rule_set_id, entity_type_id, source_key, source_value, valid_from)
         do update set
           target_value = excluded.target_value,
@@ -220,6 +222,7 @@ export async function importMappingRows(rows: Record<string, unknown>[]) {
           updated_at = current_timestamp
       `,
       [
+        createId(),
         context.clientRuleSetId,
         context.clientEntityTypeId,
         "customer_name",
@@ -251,6 +254,7 @@ export async function importGroupRows(rows: Record<string, unknown>[]) {
     await query(
       `
         insert into mdm_group_rule (
+          id,
           rule_set_id,
           entity_type_id,
           member_value,
@@ -263,7 +267,7 @@ export async function importGroupRows(rows: Record<string, unknown>[]) {
           created_by,
           updated_by
         )
-        values ($1, $2, $3, $4, $5, $6, 'approved', true, $7, $8, $8)
+        values ($1, $2, $3, $4, $5, $6, $7, 'approved', true, $8, $9, $9)
         on conflict (rule_set_id, entity_type_id, member_value, valid_from)
         do update set
           group_value = excluded.group_value,
@@ -275,6 +279,7 @@ export async function importGroupRows(rows: Record<string, unknown>[]) {
           updated_at = current_timestamp
       `,
       [
+        createId(),
         context.clientRuleSetId,
         context.clientEntityTypeId,
         String(row.cliente).trim(),
@@ -304,6 +309,7 @@ export async function importParameterRows(rows: Record<string, unknown>[]) {
     await query(
       `
         insert into mdm_parameter (
+          id,
           parameter_key,
           parameter_value,
           data_type,
@@ -317,7 +323,7 @@ export async function importParameterRows(rows: Record<string, unknown>[]) {
           created_by,
           updated_by
         )
-        values ($1, $2, 'numeric', $3, 'CLIENT', $4, $5, 'approved', true, $6, $7, $7)
+        values ($1, $2, $3, 'numeric', $4, 'CLIENT', $5, $6, 'approved', true, $7, $8, $8)
         on conflict (parameter_key, domain, parameter_scope_type, parameter_scope_value, valid_from)
         do update set
           parameter_value = excluded.parameter_value,
@@ -328,6 +334,7 @@ export async function importParameterRows(rows: Record<string, unknown>[]) {
           updated_at = current_timestamp
       `,
       [
+        createId(),
         "PVP_FACTOR",
         String(row.factor).trim(),
         "ventas_perseida",
@@ -388,6 +395,7 @@ async function importNormalizedMappings(rows: NormalizedMappingRow[]) {
     await query(
       `
         insert into mdm_mapping_rule (
+          id,
           rule_set_id,
           entity_type_id,
           source_key,
@@ -402,7 +410,7 @@ async function importNormalizedMappings(rows: NormalizedMappingRow[]) {
           created_by,
           updated_by
         )
-        values ($1, $2, $3, $4, $5, $6, 100, $7, 'approved', $8, $9, $10, $10)
+        values ($1, $2, $3, $4, $5, $6, $7, 100, $8, 'approved', $9, $10, $11, $11)
         on conflict (rule_set_id, entity_type_id, source_key, source_value, valid_from)
         do update set
           target_value = excluded.target_value,
@@ -414,6 +422,7 @@ async function importNormalizedMappings(rows: NormalizedMappingRow[]) {
           updated_at = current_timestamp
       `,
       [
+        createId(),
         context.clientRuleSetId,
         context.clientEntityTypeId,
         "customer_name",
@@ -441,6 +450,7 @@ async function importNormalizedGroups(rows: NormalizedGroupRow[]) {
     await query(
       `
         insert into mdm_group_rule (
+          id,
           rule_set_id,
           entity_type_id,
           member_value,
@@ -453,7 +463,7 @@ async function importNormalizedGroups(rows: NormalizedGroupRow[]) {
           created_by,
           updated_by
         )
-        values ($1, $2, $3, $4, $5, $6, 'approved', true, $7, $8, $8)
+        values ($1, $2, $3, $4, $5, $6, $7, 'approved', true, $8, $9, $9)
         on conflict (rule_set_id, entity_type_id, member_value, valid_from)
         do update set
           group_value = excluded.group_value,
@@ -465,6 +475,7 @@ async function importNormalizedGroups(rows: NormalizedGroupRow[]) {
           updated_at = current_timestamp
       `,
       [
+        createId(),
         context.clientRuleSetId,
         context.clientEntityTypeId,
         row.memberValue,
@@ -490,6 +501,7 @@ async function importNormalizedParameters(rows: NormalizedParameterRow[]) {
     await query(
       `
         insert into mdm_parameter (
+          id,
           parameter_key,
           parameter_value,
           data_type,
@@ -503,7 +515,7 @@ async function importNormalizedParameters(rows: NormalizedParameterRow[]) {
           created_by,
           updated_by
         )
-        values ($1, $2, 'numeric', $3, 'CLIENT', $4, $5, 'approved', true, $6, $7, $7)
+        values ($1, $2, $3, 'numeric', $4, 'CLIENT', $5, $6, 'approved', true, $7, $8, $8)
         on conflict (parameter_key, domain, parameter_scope_type, parameter_scope_value, valid_from)
         do update set
           parameter_value = excluded.parameter_value,
@@ -514,6 +526,7 @@ async function importNormalizedParameters(rows: NormalizedParameterRow[]) {
           updated_at = current_timestamp
       `,
       [
+        createId(),
         "PVP_FACTOR",
         row.factorValue,
         "ventas_perseida",

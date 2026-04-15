@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
+import { createId } from "@/lib/ids";
 
 const updateParameterSchema = z.object({
   parameterKey: z.string().min(1, "Parameter key is required."),
@@ -60,9 +61,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const current = currentResult.rows[0];
 
     if (current.status === "approved") {
+      const replacementRecordId = createId();
       const replacementResult = await query<{ id: string }>(
         `
           insert into mdm_parameter (
+            id,
             parameter_key,
             parameter_value,
             data_type,
@@ -76,10 +79,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             created_by,
             updated_by
           )
-          values ($1, $2, $3, $4, $5, $6, $7, 'pending_approval', true, $8, $9, $9)
+          values ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_approval', true, $9, $10, $10)
           returning id::text
         `,
         [
+          replacementRecordId,
           payload.parameterKey,
           payload.parameterValue,
           current.data_type,
@@ -105,9 +109,10 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             changed_by,
             comments
           )
-          values ('mdm_parameter', $1, 'update', $2::jsonb, $3::jsonb, $4, $5)
+          values ($1, 'mdm_parameter', $2, 'update', $3::jsonb, $4::jsonb, $5, $6)
         `,
         [
+          createId(),
           replacementId ?? id,
           JSON.stringify({
             replacedRecordId: current.id,
@@ -138,7 +143,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ ok: true, mode: "non_destructive_replacement", replacementId });
     }
 
-    const result = await query<{ id: string }>(
+      await query<{ id: string }>(
       `
         update mdm_parameter
         set
@@ -171,6 +176,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     await query(
       `
         insert into mdm_change_log (
+          id,
           table_name,
           record_id,
           action_type,
@@ -178,9 +184,10 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
           changed_by,
           comments
         )
-        values ('mdm_parameter', $1, 'update', $2::jsonb, $3, $4)
+        values ($1, 'mdm_parameter', $2, 'update', $3::jsonb, $4, $5)
       `,
       [
+        createId(),
         id,
         JSON.stringify({
           previousStatus: current.status,

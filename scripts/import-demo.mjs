@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -73,6 +74,24 @@ function readSheet(workbook, sheetName) {
   });
 }
 
+function getSslConfig() {
+  const sslMode = process.env.DATABASE_SSL_MODE ?? "require";
+
+  if (sslMode === "disable") {
+    return undefined;
+  }
+
+  if (sslMode === "no-verify") {
+    return {
+      rejectUnauthorized: false,
+    };
+  }
+
+  return {
+    rejectUnauthorized: true,
+  };
+}
+
 loadEnvFile(envPath);
 
 if (!process.env.DATABASE_URL) {
@@ -92,9 +111,7 @@ const parameterRows = readSheet(workbook, "mdm_parametros_pvp");
 
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: getSslConfig(),
 });
 
 try {
@@ -139,6 +156,7 @@ try {
     await client.query(
       `
         insert into mdm_mapping_rule (
+          id,
           rule_set_id,
           entity_type_id,
           source_key,
@@ -153,7 +171,7 @@ try {
           created_by,
           updated_by
         )
-        values ($1, $2, $3, $4, $5, $6, 100, $7, 'approved', $8, $9, $10, $10)
+        values ($1, $2, $3, $4, $5, $6, $7, 100, $8, 'approved', $9, $10, $11, $11)
         on conflict (rule_set_id, entity_type_id, source_key, source_value, valid_from)
         do update set
           target_value = excluded.target_value,
@@ -165,6 +183,7 @@ try {
           updated_at = current_timestamp
       `,
       [
+        randomUUID(),
         clientRuleSetId,
         clientEntityTypeId,
         "customer_name",
@@ -187,6 +206,7 @@ try {
     await client.query(
       `
         insert into mdm_group_rule (
+          id,
           rule_set_id,
           entity_type_id,
           member_value,
@@ -199,7 +219,7 @@ try {
           created_by,
           updated_by
         )
-        values ($1, $2, $3, $4, $5, $6, 'approved', true, $7, $8, $8)
+        values ($1, $2, $3, $4, $5, $6, $7, 'approved', true, $8, $9, $9)
         on conflict (rule_set_id, entity_type_id, member_value, valid_from)
         do update set
           group_value = excluded.group_value,
@@ -211,6 +231,7 @@ try {
           updated_at = current_timestamp
       `,
       [
+        randomUUID(),
         clientRuleSetId,
         clientEntityTypeId,
         String(row.cliente).trim(),
@@ -231,6 +252,7 @@ try {
     await client.query(
       `
         insert into mdm_parameter (
+          id,
           parameter_key,
           parameter_value,
           data_type,
@@ -244,7 +266,7 @@ try {
           created_by,
           updated_by
         )
-        values ($1, $2, 'numeric', $3, 'CLIENT', $4, $5, 'approved', true, $6, $7, $7)
+        values ($1, $2, $3, 'numeric', $4, 'CLIENT', $5, $6, 'approved', true, $7, $8, $8)
         on conflict (parameter_key, domain, parameter_scope_type, parameter_scope_value, valid_from)
         do update set
           parameter_value = excluded.parameter_value,
@@ -255,6 +277,7 @@ try {
           updated_at = current_timestamp
       `,
       [
+        randomUUID(),
         "PVP_FACTOR",
         String(row.factor).trim(),
         "ventas_perseida",
