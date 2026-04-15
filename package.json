@@ -8,6 +8,9 @@
     "start": "node scripts/run-next.mjs start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test:scan": "node scripts/test-scanner.mjs",
+    "e2e:client-asset": "node scripts/e2e-client-asset-suite.mjs",
+    "e2e:nondestructive": "node scripts/e2e-nondestructive.mjs",
     "db:apply": "node scripts/apply-schema.mjs",
     "db:import-demo": "node scripts/import-demo.mjs"
   },

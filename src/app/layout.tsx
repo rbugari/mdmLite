@@ -1,23 +1,29 @@
 import type { Metadata } from "next";
 
 import { SiteHeader } from "@/components/site-header";
+import { UiPreferencesProvider } from "@/components/ui-preferences-provider";
+import { getRequestPreferences } from "@/lib/request-preferences";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "MDM Lite",
-  description: "MVP de Reference Data Manager para Ventas-Perseida",
+  description: "Lightweight reference data manager MVP for commercial business rules.",
   icons: {
     icon: "/icon.svg",
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const preferences = await getRequestPreferences();
+
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang={preferences.language} data-theme={preferences.theme} suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <SiteHeader />
-        {children}
+        <UiPreferencesProvider initialLanguage={preferences.language} initialTheme={preferences.theme}>
+          <SiteHeader />
+          {children}
+        </UiPreferencesProvider>
       </body>
     </html>
   );

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
-import { getUiActorId } from "@/lib/mdm-write-context";
 
 type ParameterRow = {
   id: string;
@@ -64,11 +64,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const identity = await getAdminIdentity();
+    if (!identity) {
+      return unauthorizedResponse();
+    }
+
     const body = await request.json();
     const payload = createParameterSchema.parse(body);
-    const actorId = await getUiActorId();
 
-    await query(
+    const writeResult = await query<{ id: string }>(
       `
         insert into mdm_parameter (
           parameter_key,
@@ -84,15 +88,16 @@ export async function POST(request: Request) {
           created_by,
           updated_by
         )
-        values ($1, $2, 'numeric', $3, $4, $5, $6, 'approved', true, $7, $8, $8)
+        values ($1, $2, 'numeric', $3, $4, $5, $6, 'pending_approval', true, $7, $8, $8)
         on conflict (parameter_key, domain, parameter_scope_type, parameter_scope_value, valid_from)
         do update set
           parameter_value = excluded.parameter_value,
-          status = excluded.status,
+          status = 'pending_approval',
           is_active = excluded.is_active,
           description = excluded.description,
           updated_by = excluded.updated_by,
           updated_at = current_timestamp
+        returning id
       `,
       [
         payload.parameterKey,
@@ -102,9 +107,38 @@ export async function POST(request: Request) {
         payload.scopeValue,
         payload.validFrom,
         payload.comments || "Created from UI",
-        actorId,
+        identity.userId,
       ],
     );
+
+    if (writeResult.rows[0]?.id) {
+      await query(
+        `
+          insert into mdm_change_log (
+            table_name,
+            record_id,
+            action_type,
+            new_value_json,
+            changed_by,
+            comments
+          )
+          values ('mdm_parameter', $1, 'create', $2::jsonb, $3, $4)
+        `,
+        [
+          writeResult.rows[0].id,
+          JSON.stringify({
+            parameterKey: payload.parameterKey,
+            parameterValue: payload.parameterValue,
+            domain: payload.domain,
+            scopeType: payload.scopeType,
+            scopeValue: payload.scopeValue,
+            validFrom: payload.validFrom,
+          }),
+          identity.userId,
+          payload.comments || "Created from UI",
+        ],
+      );
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {

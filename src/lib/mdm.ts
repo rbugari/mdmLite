@@ -2,6 +2,19 @@ import type { QueryResultRow } from "pg";
 
 import { query } from "@/lib/db";
 
+export type PageResult<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+type PageOptions = {
+  page?: number;
+  pageSize?: number;
+};
+
 export type ActiveMapping = {
   id: string;
   rule_set_code: string;
@@ -42,6 +55,16 @@ type CountRow = QueryResultRow & {
   count: string;
 };
 
+function normalizePagination(options?: PageOptions) {
+  const rawPage = options?.page ?? 1;
+  const rawPageSize = options?.pageSize ?? 25;
+  const page = Number.isFinite(rawPage) ? Math.max(1, Math.floor(rawPage)) : 1;
+  const pageSize = Number.isFinite(rawPageSize) ? Math.min(100, Math.max(5, Math.floor(rawPageSize))) : 25;
+  const offset = (page - 1) * pageSize;
+
+  return { page, pageSize, offset };
+}
+
 function buildSearchClause(search: string | undefined, fields: string[]) {
   const term = search?.trim();
 
@@ -60,7 +83,13 @@ function buildSearchClause(search: string | undefined, fields: string[]) {
   };
 }
 
-export async function getActiveMappings(search?: string) {
+export async function getActiveMappings(
+  search?: string,
+  options?: PageOptions & {
+    entityTypeCode?: string;
+    ruleSetCode?: string;
+  },
+) {
   const searchClause = buildSearchClause(search, [
     "entity_type_code",
     "source_key",
@@ -68,6 +97,39 @@ export async function getActiveMappings(search?: string) {
     "target_value",
     "rule_set_code",
   ]);
+
+  const conditions: string[] = [];
+  const values: unknown[] = [...searchClause.values];
+
+  if (searchClause.clause) {
+    conditions.push(searchClause.clause.replace(/^where\s+/i, ""));
+  }
+
+  const entityTypeCode = options?.entityTypeCode?.trim();
+  if (entityTypeCode) {
+    values.push(entityTypeCode);
+    conditions.push(`entity_type_code = $${values.length}`);
+  }
+
+  const ruleSetCode = options?.ruleSetCode?.trim();
+  if (ruleSetCode) {
+    values.push(ruleSetCode);
+    conditions.push(`rule_set_code = $${values.length}`);
+  }
+
+  const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+  const pagination = normalizePagination(options);
+
+  const countResult = await query<CountRow>(
+    `
+      select count(*)::text as count
+      from vw_mdm_mapping_rule_active
+      ${whereClause}
+    `,
+    values,
+  );
+
+  const listValues: unknown[] = [...values, pagination.pageSize, pagination.offset];
 
   const result = await query<ActiveMapping>(`
     select
@@ -82,14 +144,31 @@ export async function getActiveMappings(search?: string) {
       valid_from::text,
       valid_to::text
     from vw_mdm_mapping_rule_active
-    ${searchClause.clause}
+    ${whereClause}
     order by entity_type_code, source_value
-  `, searchClause.values);
+    limit $${listValues.length - 1}
+    offset $${listValues.length}
+  `, listValues);
 
-  return result.rows;
+  const total = Number(countResult.rows[0]?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / pagination.pageSize));
+
+  return {
+    items: result.rows,
+    total,
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalPages,
+  } as PageResult<ActiveMapping>;
 }
 
-export async function getActiveParameters(search?: string) {
+export async function getActiveParameters(
+  search?: string,
+  options?: PageOptions & {
+    domain?: string;
+    scopeType?: string;
+  },
+) {
   const searchClause = buildSearchClause(search, [
     "parameter_key",
     "parameter_value",
@@ -97,6 +176,39 @@ export async function getActiveParameters(search?: string) {
     "coalesce(parameter_scope_type, '')",
     "coalesce(parameter_scope_value, '')",
   ]);
+
+  const conditions: string[] = [];
+  const values: unknown[] = [...searchClause.values];
+
+  if (searchClause.clause) {
+    conditions.push(searchClause.clause.replace(/^where\s+/i, ""));
+  }
+
+  const domain = options?.domain?.trim();
+  if (domain) {
+    values.push(domain);
+    conditions.push(`domain = $${values.length}`);
+  }
+
+  const scopeType = options?.scopeType?.trim();
+  if (scopeType) {
+    values.push(scopeType);
+    conditions.push(`coalesce(parameter_scope_type, '') = $${values.length}`);
+  }
+
+  const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+  const pagination = normalizePagination(options);
+
+  const countResult = await query<CountRow>(
+    `
+      select count(*)::text as count
+      from vw_mdm_parameter_active
+      ${whereClause}
+    `,
+    values,
+  );
+
+  const listValues: unknown[] = [...values, pagination.pageSize, pagination.offset];
 
   const result = await query<ActiveParameter>(`
     select
@@ -110,14 +222,31 @@ export async function getActiveParameters(search?: string) {
       valid_from::text,
       valid_to::text
     from vw_mdm_parameter_active
-    ${searchClause.clause}
+    ${whereClause}
     order by parameter_key, parameter_scope_value nulls first
-  `, searchClause.values);
+    limit $${listValues.length - 1}
+    offset $${listValues.length}
+  `, listValues);
 
-  return result.rows;
+  const total = Number(countResult.rows[0]?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / pagination.pageSize));
+
+  return {
+    items: result.rows,
+    total,
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalPages,
+  } as PageResult<ActiveParameter>;
 }
 
-export async function getActiveGroups(search?: string) {
+export async function getActiveGroups(
+  search?: string,
+  options?: PageOptions & {
+    entityTypeCode?: string;
+    ruleSetCode?: string;
+  },
+) {
   const searchClause = buildSearchClause(search, [
     "entity_type_code",
     "member_value",
@@ -125,6 +254,39 @@ export async function getActiveGroups(search?: string) {
     "coalesce(group_label, '')",
     "rule_set_code",
   ]);
+
+  const conditions: string[] = [];
+  const values: unknown[] = [...searchClause.values];
+
+  if (searchClause.clause) {
+    conditions.push(searchClause.clause.replace(/^where\s+/i, ""));
+  }
+
+  const entityTypeCode = options?.entityTypeCode?.trim();
+  if (entityTypeCode) {
+    values.push(entityTypeCode);
+    conditions.push(`entity_type_code = $${values.length}`);
+  }
+
+  const ruleSetCode = options?.ruleSetCode?.trim();
+  if (ruleSetCode) {
+    values.push(ruleSetCode);
+    conditions.push(`rule_set_code = $${values.length}`);
+  }
+
+  const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+  const pagination = normalizePagination(options);
+
+  const countResult = await query<CountRow>(
+    `
+      select count(*)::text as count
+      from vw_mdm_group_rule_active
+      ${whereClause}
+    `,
+    values,
+  );
+
+  const listValues: unknown[] = [...values, pagination.pageSize, pagination.offset];
 
   const result = await query<ActiveGroup>(`
     select
@@ -137,11 +299,22 @@ export async function getActiveGroups(search?: string) {
       valid_from::text,
       valid_to::text
     from vw_mdm_group_rule_active
-    ${searchClause.clause}
+    ${whereClause}
     order by entity_type_code, member_value
-  `, searchClause.values);
+    limit $${listValues.length - 1}
+    offset $${listValues.length}
+  `, listValues);
 
-  return result.rows;
+  const total = Number(countResult.rows[0]?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / pagination.pageSize));
+
+  return {
+    items: result.rows,
+    total,
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalPages,
+  } as PageResult<ActiveGroup>;
 }
 
 export async function getDashboardStats() {

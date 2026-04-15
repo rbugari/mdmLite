@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { useUiPreferences } from "@/components/ui-preferences-provider";
+import { getCopy } from "@/lib/copy";
 import type { ActiveParameter } from "@/lib/mdm";
 
 type Props = {
@@ -16,6 +18,8 @@ type FormResult = {
 
 export function ParameterEditTable({ items }: Props) {
   const router = useRouter();
+  const { language } = useUiPreferences();
+  const t = getCopy(language).forms.parameterTable;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [status, setStatus] = useState<Record<string, FormResult | null>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -63,7 +67,7 @@ export function ParameterEditTable({ items }: Props) {
   }
 
   if (items.length === 0) {
-    return <div className="empty-state">No hay parametros activos para el filtro actual.</div>;
+    return <div className="empty-state">{t.empty}</div>;
   }
 
   return (
@@ -71,13 +75,9 @@ export function ParameterEditTable({ items }: Props) {
       <table className="data-table">
         <thead>
           <tr>
-            <th>Clave</th>
-            <th>Valor</th>
-            <th>Tipo</th>
-            <th>Dominio</th>
-            <th>Alcance</th>
-            <th>Vigencia</th>
-            <th>Accion</th>
+            {t.headers.map((header) => (
+              <th key={header}>{header}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -87,6 +87,7 @@ export function ParameterEditTable({ items }: Props) {
               item={item}
               editingId={editingId}
               savingId={savingId}
+              language={language}
               status={status[item.id] ?? null}
               onStartEdit={() => setEditingId(item.id)}
               onCancelEdit={() => setEditingId(null)}
@@ -103,15 +104,17 @@ type FragmentRowProps = {
   item: ActiveParameter;
   editingId: string | null;
   savingId: string | null;
+  language: "en" | "es";
   status: FormResult | null;
   onStartEdit: () => void;
   onCancelEdit: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>, id: string) => Promise<void>;
 };
 
-function FragmentRow({ item, editingId, savingId, status, onStartEdit, onCancelEdit, onSubmit }: FragmentRowProps) {
+function FragmentRow({ item, editingId, savingId, language, status, onStartEdit, onCancelEdit, onSubmit }: FragmentRowProps) {
   const isEditing = editingId === item.id;
   const isSaving = savingId === item.id;
+  const t = getCopy(language).forms.parameterTable;
 
   return (
     <>
@@ -123,12 +126,15 @@ function FragmentRow({ item, editingId, savingId, status, onStartEdit, onCancelE
         <td>
           {item.parameter_scope_type && item.parameter_scope_value
             ? `${item.parameter_scope_type}: ${item.parameter_scope_value}`
-            : "GLOBAL"}
+            : t.global}
         </td>
         <td>{item.valid_from}</td>
         <td>
+          <a className="table-action" href={`/audit?recordId=${item.id}`}>
+            History
+          </a>
           <button type="button" className="table-action" onClick={isEditing ? onCancelEdit : onStartEdit}>
-            {isEditing ? "Cerrar" : "Editar"}
+            {isEditing ? t.close : t.edit}
           </button>
         </td>
       </tr>
@@ -137,43 +143,43 @@ function FragmentRow({ item, editingId, savingId, status, onStartEdit, onCancelE
           <td colSpan={7}>
             <form onSubmit={(event) => void onSubmit(event, item.id)} className="inline-form-grid inline-form-grid--tight">
               <label className="form-field">
-                <span>Clave</span>
+                <span>{t.parameterKeyLabel}</span>
                 <input name="parameterKey" type="text" defaultValue={item.parameter_key} required />
               </label>
               <label className="form-field">
-                <span>Valor</span>
+                <span>{t.parameterValueLabel}</span>
                 <input name="parameterValue" type="text" defaultValue={item.parameter_value} required />
               </label>
               <label className="form-field">
-                <span>Dominio</span>
+                <span>{t.domainLabel}</span>
                 <input name="domain" type="text" defaultValue={item.domain} required />
               </label>
               <label className="form-field">
-                <span>Tipo de alcance</span>
+                <span>{t.scopeTypeLabel}</span>
                 <input name="scopeType" type="text" defaultValue={item.parameter_scope_type ?? "CLIENT"} required />
               </label>
               <label className="form-field form-field--full">
-                <span>Valor de alcance</span>
+                <span>{t.scopeValueLabel}</span>
                 <input name="scopeValue" type="text" defaultValue={item.parameter_scope_value ?? ""} required />
               </label>
               <label className="form-field">
-                <span>Vigente desde</span>
+                <span>{t.validFromLabel}</span>
                 <input name="validFrom" type="date" defaultValue={item.valid_from} required />
               </label>
               <label className="form-field form-field--full">
-                <span>Comentario</span>
-                <input name="comments" type="text" placeholder="Actualizacion manual desde UI" />
+                <span>{t.commentsLabel}</span>
+                <input name="comments" type="text" placeholder={t.commentsPlaceholder} />
               </label>
               <div className="form-actions form-field--full">
                 <button type="submit" className="hero-link hero-link--primary" disabled={isSaving}>
-                  {isSaving ? "Guardando..." : "Guardar cambios"}
+                  {isSaving ? t.saving : t.save}
                 </button>
                 <button type="button" className="hero-link" onClick={onCancelEdit} disabled={isSaving}>
-                  Cancelar
+                  {t.cancel}
                 </button>
                 {status ? (
                   <span className={status.ok ? "form-status form-status--ok" : "form-status form-status--error"}>
-                    {status.ok ? "Parametro actualizado." : status.error}
+                    {status.ok ? t.success : status.error}
                   </span>
                 ) : null}
               </div>

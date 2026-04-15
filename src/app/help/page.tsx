@@ -1,114 +1,43 @@
 import Link from "next/link";
 
 import { HelpNav } from "@/components/help-nav";
+import { getCopy } from "@/lib/copy";
+import { getRequestPreferences } from "@/lib/request-preferences";
+export default async function HelpOverviewPage() {
+  const { language } = await getRequestPreferences();
+  const t = getCopy(language).helpOverview;
 
-const sections = [
-  {
-    title: "FAQ ejecutiva",
-    href: "/help/executive",
-    text: "Resume en lenguaje ejecutivo que problema resuelve MDM Lite, con quien compite de verdad y por que no reemplaza Purview, Unity Catalog o catalogos corporativos.",
-  },
-  {
-    title: "Guia funcional",
-    href: "/help/functional",
-    text: "Explica que hace cada modulo, como se carga la informacion y como entra MDM Lite en una corrida ETL tradicional.",
-  },
-  {
-    title: "Posicionamiento",
-    href: "/help/positioning",
-    text: "Aclara que MDM Lite no compite con Purview, Unity Catalog u otras herramientas de catalogo y gobierno. Se posiciona como complemento operativo.",
-  },
-  {
-    title: "Medallion y ELT",
-    href: "/help/platforms",
-    text: "Baja el uso del producto a contextos modernos como Databricks, Fabric o Snowflake con enfoque medallion, lakehouse y ELT.",
-  },
-];
-
-const keyIdeas = [
-  {
-    message: "MDM Lite cubre un hueco operativo entre el dato crudo y el modelo consumible: homologaciones, agrupaciones y parametros con vigencia.",
-  },
-  {
-    message: "No reemplaza catalogo, gobierno, lineage, permisos ni descubrimiento de datos; eso sigue viviendo en plataformas como Purview, Unity Catalog o Collibra.",
-  },
-  {
-    message: "Su valor esta en la simplicidad: una capa pequena, entendible y operable por negocio o data stewardship sin abrir una plataforma MDM enterprise.",
-  },
-  {
-    message: "La integracion tecnica se apoya en contratos estables por vistas SQL, utiles para SQL clasico, Python, dbt, notebooks o pipelines ELT.",
-  },
-];
-
-const audienceRoutes = [
-  {
-    audience: "Negocio y sponsors",
-    title: "Entrar por valor y alcance",
-    text: "Ideal para explicar rapido que problema resuelve, por que no es un MDM enterprise y con quien compite de verdad.",
-    href: "/help/executive",
-    cta: "Abrir FAQ ejecutiva",
-  },
-  {
-    audience: "Arquitectura y gobierno",
-    title: "Entrar por posicionamiento",
-    text: "Aclara la relacion con Purview, Unity Catalog, Collibra y otras piezas de catalogo, metadata o gobierno.",
-    href: "/help/positioning",
-    cta: "Ver posicionamiento",
-  },
-  {
-    audience: "Data engineering",
-    title: "Entrar por integracion tecnica",
-    text: "Baja el producto a ETL, ELT, medallion, dbt, notebooks, Databricks, Fabric y Snowflake.",
-    href: "/help/platforms",
-    cta: "Ver medallion y ELT",
-  },
-];
-
-const quickStart = [
-  "Entender el producto en 3 minutos: FAQ ejecutiva.",
-  "Responder si compite o complementa a Purview o Unity Catalog: Posicionamiento.",
-  "Mostrar encaje en pipelines modernos: Medallion y ELT.",
-  "Entender pantallas, altas, ediciones y uso funcional: Guia funcional.",
-];
-
-export default function HelpOverviewPage() {
   return (
     <main className="page-shell page-shell--narrow">
       <HelpNav currentPath="/help" />
       <section className="section-head">
         <div>
-          <span className="eyebrow">Help / Centro de Conocimiento</span>
-          <h1>Como entender MDM Lite desde negocio, data engineering y arquitectura</h1>
-          <p>
-            Esta seccion ya no es solo una ayuda de pantalla. Pasa a ser una explicacion de producto: que problema resuelve, donde encaja frente a otras herramientas y como se integra en entornos clasicos de DW y en modelos modernos tipo medallion, ELT o lakehouse.
-          </p>
+          <span className="eyebrow">{t.heroEyebrow}</span>
+          <h1>{t.title}</h1>
+          <p>{t.description}</p>
         </div>
       </section>
       <section className="help-hero">
         <article className="help-summary-card">
-          <span className="eyebrow">Producto</span>
-          <h2>Que es MDM Lite</h2>
-          <p>
-            Una capa liviana para administrar reglas maestras simples que los procesos tecnicos necesitan consultar todo el tiempo: equivalencias, agrupaciones y parametros vigentes.
-          </p>
+          <span className="eyebrow">{t.productEyebrow}</span>
+          <h2>{t.productTitle}</h2>
+          <p>{t.productText}</p>
         </article>
         <article className="help-summary-card">
-          <span className="eyebrow">Limite</span>
-          <h2>Que no es</h2>
-          <p>
-            No es un catalogo corporativo, no es una plataforma de gobierno transversal y no es un MDM enterprise completo. Es un complemento simple que resuelve un hueco muy concreto y muy frecuente.
-          </p>
+          <span className="eyebrow">{t.limitEyebrow}</span>
+          <h2>{t.limitTitle}</h2>
+          <p>{t.limitText}</p>
         </article>
       </section>
       <section className="help-diagram-card help-portal-intro">
         <div className="help-card__head">
           <div>
-            <span className="eyebrow">Entrada rapida</span>
-            <h2>Elegir segun la audiencia</h2>
+            <span className="eyebrow">{t.audienceEyebrow}</span>
+            <h2>{t.audienceTitle}</h2>
           </div>
         </div>
         <div className="help-audience-grid">
-          {audienceRoutes.map((route) => (
+          {t.audienceRoutes.map((route) => (
             <article key={route.href} className="help-audience-card">
               <span className="eyebrow">{route.audience}</span>
               <h3>{route.title}</h3>
@@ -124,10 +53,10 @@ export default function HelpOverviewPage() {
       <section className="help-grid help-grid--two">
         <article className="help-card">
           <div className="help-card__section">
-            <span className="eyebrow">Atajo</span>
-            <h2>Si tienes una reunion y poco tiempo</h2>
+            <span className="eyebrow">{t.shortcutEyebrow}</span>
+            <h2>{t.shortcutTitle}</h2>
             <ul className="help-list">
-              {quickStart.map((item) => (
+              {t.quickStart.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
@@ -135,17 +64,15 @@ export default function HelpOverviewPage() {
         </article>
         <article className="help-card help-card--accent">
           <div className="help-card__section">
-            <span className="eyebrow">Lectura recomendada</span>
-            <h2>Recorrido corto del portal</h2>
-            <p>
-              Empieza por FAQ ejecutiva para explicar el producto. Sigue por Posicionamiento si aparece la comparacion con catalogo o gobierno. Cierra con Medallion y ELT si la conversacion entra en arquitectura moderna.
-            </p>
+            <span className="eyebrow">{t.recommendedEyebrow}</span>
+            <h2>{t.recommendedTitle}</h2>
+            <p>{t.recommendedText}</p>
             <div className="hero-actions">
               <Link href="/help/executive" className="hero-link">
-                FAQ ejecutiva
+                {t.executiveCta}
               </Link>
               <Link href="/help/platforms" className="hero-link">
-                Medallion y ELT
+                {t.platformsCta}
               </Link>
             </div>
           </div>
@@ -154,15 +81,15 @@ export default function HelpOverviewPage() {
 
       <section className="help-faq">
         <div className="help-faq__list">
-          {sections.map((section) => (
+          {t.sections.map((section) => (
             <article key={section.href} className="help-card">
               <div className="help-card__head">
                 <div>
-                  <span className="eyebrow">Seccion</span>
+                  <span className="eyebrow">{t.sectionEyebrow}</span>
                   <h2>{section.title}</h2>
                 </div>
                 <Link href={section.href} className="hero-link hero-link--primary">
-                  Abrir
+                  {t.openCta}
                 </Link>
               </div>
               <div className="help-card__section">
@@ -175,31 +102,29 @@ export default function HelpOverviewPage() {
       <section className="help-grid help-grid--two">
         <article className="help-card">
           <div className="help-card__section">
-            <span className="eyebrow">Ideas clave</span>
-            <h2>Mensajes que conviene dejar claros</h2>
+            <span className="eyebrow">{t.ideasEyebrow}</span>
+            <h2>{t.ideasTitle}</h2>
             <ul className="help-list">
-              {keyIdeas.map((idea) => (
-                <li key={idea.message}>{idea.message}</li>
+              {t.keyIdeas.map((idea) => (
+                <li key={idea}>{idea}</li>
               ))}
             </ul>
           </div>
         </article>
         <article className="help-card">
           <div className="help-card__section">
-            <span className="eyebrow">Recomendacion</span>
-            <h2>Como usar esta Help</h2>
-            <p>
-              Si la audiencia es funcional, empieza por Guia funcional. Si es arquitectura o gobierno, empieza por Posicionamiento. Si la audiencia es Databricks, Fabric o Snowflake, empieza por Medallion y ELT.
-            </p>
+            <span className="eyebrow">{t.recommendationEyebrow}</span>
+            <h2>{t.recommendationTitle}</h2>
+            <p>{t.recommendationText}</p>
             <div className="hero-actions">
               <Link href="/help/executive" className="hero-link">
-                Ver FAQ ejecutiva
+                {t.executiveLink}
               </Link>
               <Link href="/help/functional" className="hero-link">
-                Ver guia funcional
+                {t.functionalLink}
               </Link>
               <Link href="/help/positioning" className="hero-link">
-                Ver posicionamiento
+                {t.positioningLink}
               </Link>
             </div>
           </div>

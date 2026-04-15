@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-04-15T06:44:30.590Z",
+  "overall": "GO",
+  "baseUrl": "http://localhost:3003",
+  "server": {
+    "ok": true,
+    "error": null
+  },
+  "totalDurationMs": 30494,
+  "steps": [
+    {
+      "script": "typecheck",
+      "code": 0,
+      "ok": true,
+      "durationMs": 2632
+    },
+    {
+      "script": "e2e:nondestructive",
+      "code": 0,
+      "ok": true,
+      "durationMs": 9835
+    },
+    {
+      "script": "e2e:client-asset",
+      "code": 0,
+      "ok": true,
+      "durationMs": 16192
+    }
+  ]
+}

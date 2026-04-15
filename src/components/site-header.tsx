@@ -1,16 +1,23 @@
-import Link from "next/link";
+"use client";
 
-const links = [
-  { href: "/", label: "Inicio" },
-  { href: "/mappings", label: "Equivalencias" },
-  { href: "/groups", label: "Agrupaciones" },
-  { href: "/parameters", label: "Parametros" },
-  { href: "/imports", label: "Importacion" },
-  { href: "/help", label: "Help" },
-  { href: "/api/health/db", label: "DB Health" },
-];
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Languages, Moon, Sun } from "lucide-react";
+
+import { getCopy } from "@/lib/copy";
+import { useUiPreferences } from "@/components/ui-preferences-provider";
 
 export function SiteHeader() {
+  const router = useRouter();
+  const { language, theme, setLanguage, toggleTheme } = useUiPreferences();
+  const t = getCopy(language).header;
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/auth/login");
+    router.refresh();
+  }
+
   return (
     <header className="site-header">
       <div className="site-header__inner">
@@ -19,13 +26,46 @@ export function SiteHeader() {
           <span className="site-brand__text">Lite</span>
         </Link>
 
-        <nav className="site-nav" aria-label="Principal">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href} className="site-nav__link">
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="site-header__actions">
+          <nav className="site-nav" aria-label={t.navLabel}>
+            {t.links.map((link) => (
+              <Link key={link.href} href={link.href} className="site-nav__link">
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="site-header__controls">
+            <button type="button" className="site-control" onClick={toggleTheme} aria-label={t.themeToggle}>
+              {theme === "light" ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}
+              <span>{theme === "light" ? t.darkTheme : t.lightTheme}</span>
+            </button>
+
+            <div className="site-control-group" role="group" aria-label={t.languageToggle}>
+              <span className="site-control-group__icon" aria-hidden="true">
+                <Languages size={16} />
+              </span>
+              <button
+                type="button"
+                className={language === "en" ? "site-control site-control--active" : "site-control"}
+                onClick={() => setLanguage("en")}
+              >
+                {t.english}
+              </button>
+              <button
+                type="button"
+                className={language === "es" ? "site-control site-control--active" : "site-control"}
+                onClick={() => setLanguage("es")}
+              >
+                {t.spanish}
+              </button>
+            </div>
+
+            <button type="button" className="site-control" onClick={() => void handleLogout()}>
+              <span>{t.logout}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </header>
   );

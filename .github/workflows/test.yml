@@ -1,0 +1,103 @@
+name: Test Suite
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: mdm_lite
+          POSTGRES_USER: mdm_user
+          POSTGRES_PASSWORD: mdm_pass
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup database schema
+        env:
+          DATABASE_URL: postgresql://mdm_user:mdm_pass@localhost:5432/mdm_lite
+        run: npm run db:apply
+
+      - name: Start server
+        env:
+          DATABASE_URL: postgresql://mdm_user:mdm_pass@localhost:5432/mdm_lite
+          FALLBACK_ADMIN_EMAIL: ci-admin@mdm.local
+        run: npm run dev &
+        
+      - name: Wait for server
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:3003/api/health/db > /dev/null; then
+              echo "Server is ready"
+              exit 0
+            fi
+            echo "Waiting for server... ($i/30)"
+            sleep 1
+          done
+          echo "Server failed to start"
+          exit 1
+
+      - name: Run test suite
+        env:
+          DATABASE_URL: postgresql://mdm_user:mdm_pass@localhost:5432/mdm_lite
+          FALLBACK_ADMIN_EMAIL: ci-admin@mdm.local
+        run: npm run test:scan
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: reports/test-scan-latest.json
+
+      - name: Check test result
+        if: failure()
+        run: cat reports/test-scan-latest.json
+
+  typecheck:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript check
+        run: npm run typecheck

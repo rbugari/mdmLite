@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
-import { getDefaultClientRuleContext, getUiActorId } from "@/lib/mdm-write-context";
+import { getDefaultClientRuleContext } from "@/lib/mdm-write-context";
 
 type GroupRow = {
   id: string;
@@ -59,12 +60,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const identity = await getAdminIdentity();
+    if (!identity) {
+      return unauthorizedResponse();
+    }
+
     const body = await request.json();
     const payload = createGroupSchema.parse(body);
-    const actorId = await getUiActorId();
     const context = await getDefaultClientRuleContext();
 
-    await query(
+    const writeResult = await query<{ id: string }>(
       `
         insert into mdm_group_rule (
           rule_set_id,
@@ -79,16 +84,17 @@ export async function POST(request: Request) {
           created_by,
           updated_by
         )
-        values ($1, $2, $3, $4, $4, $5, 'approved', true, $6, $7, $7)
+        values ($1, $2, $3, $4, $4, $5, 'pending_approval', true, $6, $7, $7)
         on conflict (rule_set_id, entity_type_id, member_value, valid_from)
         do update set
           group_value = excluded.group_value,
           group_label = excluded.group_label,
-          status = excluded.status,
+          status = 'pending_approval',
           is_active = excluded.is_active,
           comments = excluded.comments,
           updated_by = excluded.updated_by,
           updated_at = current_timestamp
+        returning id
       `,
       [
         context.ruleSetId,
@@ -97,9 +103,31 @@ export async function POST(request: Request) {
         payload.groupValue,
         payload.validFrom,
         payload.comments || "Created from UI",
-        actorId,
+        identity.userId,
       ],
     );
+
+    if (writeResult.rows[0]?.id) {
+      await query(
+        `
+          insert into mdm_change_log (
+            table_name,
+            record_id,
+            action_type,
+            new_value_json,
+            changed_by,
+            comments
+          )
+          values ('mdm_group_rule', $1, 'create', $2::jsonb, $3, $4)
+        `,
+        [
+          writeResult.rows[0].id,
+          JSON.stringify({ memberValue: payload.memberValue, groupValue: payload.groupValue, validFrom: payload.validFrom }),
+          identity.userId,
+          payload.comments || "Created from UI",
+        ],
+      );
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {

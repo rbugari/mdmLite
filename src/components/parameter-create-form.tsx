@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { useUiPreferences } from "@/components/ui-preferences-provider";
+import { getCopy } from "@/lib/copy";
+
 type FormResult = {
   ok: boolean;
   error?: string;
@@ -10,6 +13,8 @@ type FormResult = {
 
 export function ParameterCreateForm() {
   const router = useRouter();
+  const { language } = useUiPreferences();
+  const t = getCopy(language).forms.parameterCreate;
   const [status, setStatus] = useState<FormResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,7 +54,7 @@ export function ParameterCreateForm() {
     } catch (error) {
       setStatus({
         ok: false,
-        error: error instanceof Error ? error.message : "Unknown error creating parameter.",
+        error: error instanceof Error ? error.message : t.submit,
       });
     } finally {
       setIsSubmitting(false);
@@ -60,56 +65,56 @@ export function ParameterCreateForm() {
     <section className="table-panel table-panel--padded">
       <div className="form-header">
         <div>
-          <span className="eyebrow">Alta Manual</span>
-          <h2>Nuevo parametro</h2>
-          <p>Formulario liviano para cargar parametros activos con alcance simple por cliente u otro contexto.</p>
+          <span className="eyebrow">{t.eyebrow}</span>
+          <h2>{t.title}</h2>
+          <p>{t.description}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="inline-form-grid">
         <label className="form-field">
-          <span>Clave</span>
+          <span>{t.parameterKeyLabel}</span>
           <input name="parameterKey" type="text" defaultValue="PVP_FACTOR" required />
         </label>
 
         <label className="form-field">
-          <span>Valor</span>
-          <input name="parameterValue" type="text" placeholder="1.05" required />
+          <span>{t.parameterValueLabel}</span>
+          <input name="parameterValue" type="text" placeholder={t.parameterValuePlaceholder} required />
         </label>
 
         <label className="form-field">
-          <span>Dominio</span>
+          <span>{t.domainLabel}</span>
           <input name="domain" type="text" defaultValue="ventas_perseida" required />
         </label>
 
         <label className="form-field">
-          <span>Tipo de alcance</span>
+          <span>{t.scopeTypeLabel}</span>
           <input name="scopeType" type="text" defaultValue="CLIENT" required />
         </label>
 
         <label className="form-field form-field--full">
-          <span>Valor de alcance</span>
-          <input name="scopeValue" type="text" placeholder="MARJANE" required />
+          <span>{t.scopeValueLabel}</span>
+          <input name="scopeValue" type="text" placeholder={t.scopeValuePlaceholder} required />
         </label>
 
         <label className="form-field">
-          <span>Vigente desde</span>
+          <span>{t.validFromLabel}</span>
           <input name="validFrom" type="date" defaultValue="2024-01-01" required />
         </label>
 
         <label className="form-field form-field--full">
-          <span>Comentario</span>
-          <input name="comments" type="text" placeholder="Carga manual desde UI" />
+          <span>{t.commentsLabel}</span>
+          <input name="comments" type="text" placeholder={t.commentsPlaceholder} />
         </label>
 
         <div className="form-actions form-field--full">
           <button type="submit" className="hero-link hero-link--primary" disabled={isSubmitting}>
-            {isSubmitting ? "Guardando..." : "Crear parametro"}
+            {isSubmitting ? t.submitting : t.submit}
           </button>
 
           {status ? (
             <span className={status.ok ? "form-status form-status--ok" : "form-status form-status--error"}>
-              {status.ok ? "Parametro creado correctamente." : status.error}
+              {status.ok ? t.success : status.error}
             </span>
           ) : null}
         </div>

@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { useUiPreferences } from "@/components/ui-preferences-provider";
+import { getCopy } from "@/lib/copy";
+
 type FormResult = {
   ok: boolean;
   error?: string;
@@ -10,6 +13,8 @@ type FormResult = {
 
 export function GroupCreateForm() {
   const router = useRouter();
+  const { language } = useUiPreferences();
+  const t = getCopy(language).forms.groupCreate;
   const [status, setStatus] = useState<FormResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,7 +51,7 @@ export function GroupCreateForm() {
     } catch (error) {
       setStatus({
         ok: false,
-        error: error instanceof Error ? error.message : "Unknown error creating group.",
+        error: error instanceof Error ? error.message : t.submit,
       });
     } finally {
       setIsSubmitting(false);
@@ -57,41 +62,41 @@ export function GroupCreateForm() {
     <section className="table-panel table-panel--padded">
       <div className="form-header">
         <div>
-          <span className="eyebrow">Alta Manual</span>
-          <h2>Nueva agrupacion</h2>
-          <p>Formulario liviano para cargar una agrupacion comercial sin depender de importacion.</p>
+          <span className="eyebrow">{t.eyebrow}</span>
+          <h2>{t.title}</h2>
+          <p>{t.description}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="inline-form-grid">
         <label className="form-field">
-          <span>Miembro</span>
-          <input name="memberValue" type="text" placeholder="EROSKI S.COOP." required />
+          <span>{t.memberLabel}</span>
+          <input name="memberValue" type="text" placeholder={t.memberPlaceholder} required />
         </label>
 
         <label className="form-field">
-          <span>Grupo</span>
-          <input name="groupValue" type="text" placeholder="EROSKY" required />
+          <span>{t.groupLabel}</span>
+          <input name="groupValue" type="text" placeholder={t.groupPlaceholder} required />
         </label>
 
         <label className="form-field">
-          <span>Vigente desde</span>
+          <span>{t.validFromLabel}</span>
           <input name="validFrom" type="date" defaultValue="2024-01-01" required />
         </label>
 
         <label className="form-field form-field--full">
-          <span>Comentario</span>
-          <input name="comments" type="text" placeholder="Carga manual desde UI" />
+          <span>{t.commentsLabel}</span>
+          <input name="comments" type="text" placeholder={t.commentsPlaceholder} />
         </label>
 
         <div className="form-actions form-field--full">
           <button type="submit" className="hero-link hero-link--primary" disabled={isSubmitting}>
-            {isSubmitting ? "Guardando..." : "Crear agrupacion"}
+            {isSubmitting ? t.submitting : t.submit}
           </button>
 
           {status ? (
             <span className={status.ok ? "form-status form-status--ok" : "form-status form-status--error"}>
-              {status.ok ? "Agrupacion creada correctamente." : status.error}
+              {status.ok ? t.success : status.error}
             </span>
           ) : null}
         </div>

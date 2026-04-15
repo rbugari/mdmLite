@@ -1,16 +1,18 @@
 import { ImportsConsole } from "@/components/imports-console";
+import { getCopy } from "@/lib/copy";
+import { getRequestPreferences } from "@/lib/request-preferences";
 
-export default function ImportsPage() {
+export default async function ImportsPage() {
+  const { language } = await getRequestPreferences();
+  const t = getCopy(language).importsPage;
+
   return (
     <main className="page-shell page-shell--narrow">
       <section className="section-head">
         <div>
-          <span className="eyebrow">Operacion</span>
-          <h1>Importacion de datos</h1>
-          <p>
-            Consola inicial para reimportar el dataset demo del proyecto o cargar archivos manuales `csv/xlsx`
-            hacia equivalencias, agrupaciones y parametros.
-          </p>
+          <span className="eyebrow">{t.eyebrow}</span>
+          <h1>{t.title}</h1>
+          <p>{t.description}</p>
         </div>
       </section>
 

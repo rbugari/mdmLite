@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { HelpNav } from "@/components/help-nav";
+import { getCopy } from "@/lib/copy";
+import { getRequestPreferences } from "@/lib/request-preferences";
 
 const sqlExample = `select
   f.invoice_id,
@@ -104,143 +106,42 @@ final as (
 
 select * from final`;
 
-const contractViews = [
-  {
-    name: "vw_mdm_mapping_rule_active",
-    purpose: "Contrato de lectura para homologar valores origen hacia un canonico antes de consolidar o cargar.",
-  },
-  {
-    name: "vw_mdm_group_rule_active",
-    purpose: "Contrato de lectura para agrupar valores ya homologados dentro de una familia comercial o analitica.",
-  },
-  {
-    name: "vw_mdm_parameter_active",
-    purpose: "Contrato de lectura para aplicar factores, flags o configuraciones por dominio y alcance.",
-  },
-];
+export default async function FunctionalHelpPage() {
+  const { language } = await getRequestPreferences();
+  const t = getCopy(language).helpFunctional;
 
-const exampleRows = [
-  {
-    stage: "Entrada cruda",
-    clientSource: "ALDI PORTUGAL",
-    groupSource: "ALDI PORTUGAL",
-    factorSource: "sin resolver",
-    priceSource: "100.00",
-    outcome: "Todavia no sirve para reporting porque depende del nombre tal como viene del origen.",
-  },
-  {
-    stage: "Tras equivalencia",
-    clientSource: "ALDI",
-    groupSource: "ALDI",
-    factorSource: "sin resolver",
-    priceSource: "100.00",
-    outcome: "El cliente ya queda homologado al nombre canonico esperado por el modelo analitico.",
-  },
-  {
-    stage: "Tras agrupacion",
-    clientSource: "ALDI",
-    groupSource: "GRUPO ALDI",
-    factorSource: "sin resolver",
-    priceSource: "100.00",
-    outcome: "Ahora puede consolidarse en dashboards por grupo comercial y no solo por cliente individual.",
-  },
-  {
-    stage: "Tras parametro",
-    clientSource: "ALDI",
-    groupSource: "GRUPO ALDI",
-    factorSource: "1.08",
-    priceSource: "108.00",
-    outcome: "El ETL aplica el factor vigente y deja el dato listo para carga analitica o downstream.",
-  },
-];
-
-const optionCards = [
-  {
-    title: "Equivalencias",
-    href: "/mappings",
-    whatItIs: "Relaciona un valor origen con un valor canonico o destino para evitar hardcode en procesos y reportes.",
-    administration: "Se carga cuando un codigo o descripcion externa no coincide con el estandar interno. El admin define desde cuando vale la regla y cual es el valor homologado.",
-    fields: ["Entidad", "Clave origen", "Valor origen", "Valor destino", "Vigencia"],
-    realUse: "En un ETL de ventas, si el ERP manda 'ALDI PORTUGAL' y el modelo analitico espera 'ALDI', la equivalencia resuelve la traduccion antes de cargar el fact table.",
-  },
-  {
-    title: "Agrupaciones",
-    href: "/groups",
-    whatItIs: "Agrupa multiples valores operativos dentro de una familia comercial o analitica comun.",
-    administration: "Se usa cuando varios clientes, materiales o codigos deben consolidarse bajo una misma vista de negocio. El admin indica miembro, grupo y vigencia.",
-    fields: ["Miembro", "Grupo", "Etiqueta de grupo", "Rule set", "Vigencia"],
-    realUse: "En un ETL de clientes, 'EROSKI S.COOP.' y otras variantes pueden terminar en el grupo 'EROSKY' para reporting regional o acuerdos comerciales.",
-  },
-  {
-    title: "Parametros",
-    href: "/parameters",
-    whatItIs: "Guarda valores de configuracion de negocio que cambian con el tiempo o por contexto, sin tocar codigo.",
-    administration: "Se mantiene cuando una regla depende de un factor, porcentaje o flag por cliente, canal, pais o dominio. El admin define clave, valor, alcance y vigencia.",
-    fields: ["Clave", "Valor", "Dominio", "Tipo de alcance", "Valor de alcance", "Vigencia"],
-    realUse: "En un ETL de pricing, un parametro como 'PVP_FACTOR' puede valer 1.09 para MARJANE y 0.97 para PRIMOR, y el proceso lo consulta al transformar precios.",
-  },
-  {
-    title: "Importacion",
-    href: "/imports",
-    whatItIs: "Permite cargar lotes demo o archivos manuales csv/xlsx para poblar reglas sin entrar una por una.",
-    administration: "Se usa cuando llega un archivo del negocio o cuando se quiere reponer un set base. El admin elige tipo de dato, sube el archivo y revisa el resultado.",
-    fields: ["Tipo de carga", "Archivo", "Resultado", "Cantidad insertada o actualizada"],
-    realUse: "En un proceso ETL operativo, negocio entrega un Excel con nuevas homologaciones y el admin lo importa antes de la corrida nocturna.",
-  },
-];
-
-const etlSteps = [
-  "El sistema fuente entrega datos crudos con codigos y descripciones no normalizadas.",
-  "El ETL extrae esos datos y consulta MDM Lite para buscar equivalencias, agrupaciones y parametros vigentes.",
-  "Durante la transformacion, el ETL reemplaza valores origen, consolida grupos y aplica parametros por alcance.",
-  "El resultado ya normalizado se carga en tablas analiticas, marts o modelos de reporting.",
-  "Si aparece un valor nuevo no contemplado, el admin lo carga en MDM Lite y la siguiente corrida ya lo resuelve sin cambiar codigo.",
-];
-
-const operatingRules = [
-  "Alta manual simple: util para correcciones puntuales o pruebas controladas.",
-  "Importacion por archivo: util para volumen, onboarding inicial o mantenimiento periodico.",
-  "Vigencia: cada regla debe tener una fecha desde la cual aplica; eso evita sobreescribir historia sin control.",
-  "Consumo tecnico: el ETL deberia leer siempre desde las vistas activas para no depender de tablas internas.",
-  "Cambio controlado: cuando cambie una regla, conviene crear nueva vigencia antes que editar historia pasada.",
-];
-
-export default function FunctionalHelpPage() {
   return (
     <main className="page-shell page-shell--narrow">
       <HelpNav currentPath="/help/functional" />
       <section className="section-head">
         <div>
-          <span className="eyebrow">Help / Guia Funcional</span>
-          <h1>Que hace cada opcion y como usarla en un caso real de ETL</h1>
-          <p>
-            Esta guia mantiene el foco original: explicar el sentido funcional de cada modulo, que datos se
-            cargan, como se administran y como se consumen desde procesos tecnicos clasicos.
-          </p>
+          <span className="eyebrow">{t.eyebrow}</span>
+          <h1>{t.title}</h1>
+          <p>{t.description}</p>
         </div>
       </section>
       <section className="help-grid">
-        {optionCards.map((card) => (
+        {t.optionCards.map((card) => (
           <article key={card.title} className="help-card">
             <div className="help-card__head">
               <div>
-                <span className="eyebrow">Opcion del menu</span>
+                <span className="eyebrow">{t.optionEyebrow}</span>
                 <h2>{card.title}</h2>
               </div>
               <Link href={card.href} className="hero-link">
-                Abrir opcion
+                {t.openOption}
               </Link>
             </div>
             <div className="help-card__section">
-              <h3>Que es</h3>
+              <h3>{t.whatItIsTitle}</h3>
               <p>{card.whatItIs}</p>
             </div>
             <div className="help-card__section">
-              <h3>Como se administra</h3>
+              <h3>{t.administrationTitle}</h3>
               <p>{card.administration}</p>
             </div>
             <div className="help-card__section">
-              <h3>Que se pone</h3>
+              <h3>{t.fieldsTitle}</h3>
               <ul className="help-list">
                 {card.fields.map((field) => (
                   <li key={field}>{field}</li>
@@ -248,7 +149,7 @@ export default function FunctionalHelpPage() {
               </ul>
             </div>
             <div className="help-card__section">
-              <h3>Uso real en ETL</h3>
+              <h3>{t.realUseTitle}</h3>
               <p>{card.realUse}</p>
             </div>
           </article>
@@ -256,35 +157,32 @@ export default function FunctionalHelpPage() {
       </section>
       <section className="help-flow table-panel table-panel--padded">
         <div className="form-header">
-          <span className="eyebrow">Flujo Practico</span>
-          <h2>Como entraria en un ETL real</h2>
-          <p>Este sigue siendo el recorrido base del MVP cuando lo consumes desde un DW clasico o un proceso batch tradicional.</p>
+          <span className="eyebrow">{t.practicalEyebrow}</span>
+          <h2>{t.practicalTitle}</h2>
+          <p>{t.practicalText}</p>
         </div>
         <ol className="help-steps">
-          {etlSteps.map((step) => (
+          {t.etlSteps.map((step) => (
             <li key={step}>{step}</li>
           ))}
         </ol>
       </section>
       <section className="help-examples table-panel table-panel--padded">
         <div className="form-header">
-          <span className="eyebrow">Ejemplo Detallado</span>
-          <h2>Antes y despues en una corrida ETL</h2>
+          <span className="eyebrow">{t.exampleEyebrow}</span>
+          <h2>{t.exampleTitle}</h2>
         </div>
         <div className="table-scroll">
           <table className="data-table help-example-table">
             <thead>
               <tr>
-                <th>Etapa</th>
-                <th>Cliente canonico</th>
-                <th>Grupo comercial</th>
-                <th>Factor aplicado</th>
-                <th>Precio resultante</th>
-                <th>Lectura funcional</th>
+                {t.tableHeaders.map((header) => (
+                  <th key={header}>{header}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {exampleRows.map((row) => (
+              {t.exampleRows.map((row) => (
                 <tr key={row.stage}>
                   <td>{row.stage}</td>
                   <td>{row.clientSource}</td>
@@ -301,13 +199,13 @@ export default function FunctionalHelpPage() {
       <section className="help-contracts">
         <div className="section-head">
           <div>
-            <span className="eyebrow">Contrato Tecnico</span>
-            <h1>Vistas que deberia consumir un proceso</h1>
-            <p>El contrato recomendado para v0.1 se apoya en vistas activas y no en tablas internas.</p>
+            <span className="eyebrow">{t.contractEyebrow}</span>
+            <h1>{t.contractTitle}</h1>
+            <p>{t.contractText}</p>
           </div>
         </div>
         <div className="help-faq__list">
-          {contractViews.map((view) => (
+          {t.contractViews.map((view) => (
             <article key={view.name} className="help-card">
               <div className="help-card__section">
                 <h2>{view.name}</h2>
@@ -320,15 +218,15 @@ export default function FunctionalHelpPage() {
       <section className="help-code-grid">
         <article className="help-card">
           <div className="help-card__section">
-            <span className="eyebrow">Uso desde SQL</span>
-            <h2>Consulta relacional</h2>
+            <span className="eyebrow">{t.sqlEyebrow}</span>
+            <h2>{t.sqlTitle}</h2>
             <pre className="code-sample"><code>{sqlExample}</code></pre>
           </div>
         </article>
         <article className="help-card">
           <div className="help-card__section">
-            <span className="eyebrow">Uso desde Python</span>
-            <h2>Script batch o notebook</h2>
+            <span className="eyebrow">{t.pythonEyebrow}</span>
+            <h2>{t.pythonTitle}</h2>
             <pre className="code-sample"><code>{pythonExample}</code></pre>
           </div>
         </article>
@@ -336,8 +234,8 @@ export default function FunctionalHelpPage() {
       <section className="help-code-grid help-code-grid--single">
         <article className="help-card">
           <div className="help-card__section">
-            <span className="eyebrow">Uso desde dbt</span>
-            <h2>Modelo enriquecido</h2>
+            <span className="eyebrow">{t.dbtEyebrow}</span>
+            <h2>{t.dbtTitle}</h2>
             <pre className="code-sample"><code>{dbtExample}</code></pre>
           </div>
         </article>
@@ -345,10 +243,10 @@ export default function FunctionalHelpPage() {
       <section className="help-grid help-grid--two">
         <article className="help-card">
           <div className="help-card__section">
-            <span className="eyebrow">Buenas practicas</span>
-            <h2>Como administrarlo bien</h2>
+            <span className="eyebrow">{t.practicesEyebrow}</span>
+            <h2>{t.practicesTitle}</h2>
             <ul className="help-list">
-              {operatingRules.map((rule) => (
+              {t.operatingRules.map((rule) => (
                 <li key={rule}>{rule}</li>
               ))}
             </ul>
@@ -356,14 +254,12 @@ export default function FunctionalHelpPage() {
         </article>
         <article className="help-card">
           <div className="help-card__section">
-            <span className="eyebrow">Siguiente lectura</span>
-            <h2>Para audiencias modernas de data platform</h2>
-            <p>
-              Si la conversacion gira hacia Databricks, Fabric, Snowflake, medallion o ELT, conviene seguir con la pagina dedicada a esos patrones.
-            </p>
+            <span className="eyebrow">{t.nextEyebrow}</span>
+            <h2>{t.nextTitle}</h2>
+            <p>{t.nextText}</p>
             <div className="hero-actions">
-              <Link href="/help/platforms" className="hero-link hero-link--primary">Ver medallion y ELT</Link>
-              <Link href="/help/positioning" className="hero-link">Ver posicionamiento</Link>
+              <Link href="/help/platforms" className="hero-link hero-link--primary">{t.platformsCta}</Link>
+              <Link href="/help/positioning" className="hero-link">{t.positioningCta}</Link>
             </div>
           </div>
         </article>

@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { useUiPreferences } from "@/components/ui-preferences-provider";
+import { getCopy } from "@/lib/copy";
 import type { ActiveMapping } from "@/lib/mdm";
 
 type Props = {
@@ -16,6 +18,8 @@ type FormResult = {
 
 export function MappingEditTable({ items }: Props) {
   const router = useRouter();
+  const { language } = useUiPreferences();
+  const t = getCopy(language).forms.mappingTable;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [status, setStatus] = useState<Record<string, FormResult | null>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -60,7 +64,7 @@ export function MappingEditTable({ items }: Props) {
   }
 
   if (items.length === 0) {
-    return <div className="empty-state">No hay equivalencias activas para el filtro actual.</div>;
+    return <div className="empty-state">{t.empty}</div>;
   }
 
   return (
@@ -68,13 +72,9 @@ export function MappingEditTable({ items }: Props) {
       <table className="data-table">
         <thead>
           <tr>
-            <th>Entidad</th>
-            <th>Clave origen</th>
-            <th>Valor origen</th>
-            <th>Valor destino</th>
-            <th>Rule set</th>
-            <th>Vigencia</th>
-            <th>Accion</th>
+            {t.headers.map((header) => (
+              <th key={header}>{header}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -84,6 +84,7 @@ export function MappingEditTable({ items }: Props) {
               item={item}
               editingId={editingId}
               savingId={savingId}
+              language={language}
               status={status[item.id] ?? null}
               onStartEdit={() => setEditingId(item.id)}
               onCancelEdit={() => setEditingId(null)}
@@ -100,15 +101,17 @@ type FragmentRowProps = {
   item: ActiveMapping;
   editingId: string | null;
   savingId: string | null;
+  language: "en" | "es";
   status: FormResult | null;
   onStartEdit: () => void;
   onCancelEdit: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>, id: string) => Promise<void>;
 };
 
-function FragmentRow({ item, editingId, savingId, status, onStartEdit, onCancelEdit, onSubmit }: FragmentRowProps) {
+function FragmentRow({ item, editingId, savingId, language, status, onStartEdit, onCancelEdit, onSubmit }: FragmentRowProps) {
   const isEditing = editingId === item.id;
   const isSaving = savingId === item.id;
+  const t = getCopy(language).forms.mappingTable;
 
   return (
     <>
@@ -120,8 +123,11 @@ function FragmentRow({ item, editingId, savingId, status, onStartEdit, onCancelE
         <td>{item.rule_set_code}</td>
         <td>{item.valid_from}</td>
         <td>
+          <a className="table-action" href={`/audit?recordId=${item.id}`}>
+            History
+          </a>
           <button type="button" className="table-action" onClick={isEditing ? onCancelEdit : onStartEdit}>
-            {isEditing ? "Cerrar" : "Editar"}
+            {isEditing ? t.close : t.edit}
           </button>
         </td>
       </tr>
@@ -130,31 +136,31 @@ function FragmentRow({ item, editingId, savingId, status, onStartEdit, onCancelE
           <td colSpan={7}>
             <form onSubmit={(event) => void onSubmit(event, item.id)} className="inline-form-grid inline-form-grid--tight">
               <label className="form-field">
-                <span>Valor origen</span>
+                <span>{t.sourceValueLabel}</span>
                 <input name="sourceValue" type="text" defaultValue={item.source_value} required />
               </label>
               <label className="form-field">
-                <span>Valor destino</span>
+                <span>{t.targetValueLabel}</span>
                 <input name="targetValue" type="text" defaultValue={item.target_value} required />
               </label>
               <label className="form-field">
-                <span>Vigente desde</span>
+                <span>{t.validFromLabel}</span>
                 <input name="validFrom" type="date" defaultValue={item.valid_from} required />
               </label>
               <label className="form-field form-field--full">
-                <span>Comentario</span>
-                <input name="comments" type="text" placeholder="Actualizacion manual desde UI" />
+                <span>{t.commentsLabel}</span>
+                <input name="comments" type="text" placeholder={t.commentsPlaceholder} />
               </label>
               <div className="form-actions form-field--full">
                 <button type="submit" className="hero-link hero-link--primary" disabled={isSaving}>
-                  {isSaving ? "Guardando..." : "Guardar cambios"}
+                  {isSaving ? t.saving : t.save}
                 </button>
                 <button type="button" className="hero-link" onClick={onCancelEdit} disabled={isSaving}>
-                  Cancelar
+                  {t.cancel}
                 </button>
                 {status ? (
                   <span className={status.ok ? "form-status form-status--ok" : "form-status form-status--error"}>
-                    {status.ok ? "Equivalencia actualizada." : status.error}
+                    {status.ok ? t.success : status.error}
                   </span>
                 ) : null}
               </div>

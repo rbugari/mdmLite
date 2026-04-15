@@ -12,6 +12,20 @@
   --shadow: 0 24px 60px rgba(17, 68, 63, 0.12);
 }
 
+html[data-theme="dark"] {
+  --bg: #091316;
+  --surface: rgba(13, 27, 31, 0.86);
+  --surface-strong: #102126;
+  --surface-tint: rgba(17, 34, 39, 0.92);
+  --text: #e6efe9;
+  --muted: #aab8b1;
+  --line: rgba(230, 239, 233, 0.12);
+  --accent: #4fc0aa;
+  --accent-strong: #d8f7ef;
+  --accent-soft: rgba(79, 192, 170, 0.14);
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -29,6 +43,13 @@ body {
     radial-gradient(circle at bottom right, rgba(196, 138, 63, 0.18), transparent 28%),
     linear-gradient(180deg, #efe7d6 0%, #f8f5ee 100%);
   font-family: Georgia, "Times New Roman", serif;
+}
+
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at top left, rgba(79, 192, 170, 0.16), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(252, 196, 112, 0.1), transparent 24%),
+    linear-gradient(180deg, #071014 0%, #0d171b 100%);
 }
 
 a {
@@ -89,6 +110,22 @@ main {
   gap: 10px;
 }
 
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex: 1 1 auto;
+}
+
+.site-header__controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .site-nav__link {
   padding: 10px 14px;
   border-radius: 999px;
@@ -101,6 +138,52 @@ main {
   border-color: var(--line);
   background: var(--accent-soft);
   color: var(--accent-strong);
+}
+
+.site-control,
+.site-control-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.54);
+  color: var(--muted);
+}
+
+.site-control {
+  padding: 0 14px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.site-control-group {
+  padding: 4px;
+}
+
+.site-control-group__icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  padding-left: 10px;
+}
+
+.site-control--active {
+  background: var(--accent-strong);
+  color: var(--bg);
+  border-color: transparent;
+}
+
+.site-control:hover,
+.site-control:focus-visible,
+.site-nav__link:focus-visible,
+.table-action:focus-visible,
+.hero-link:focus-visible,
+.help-nav__link:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 192, 170, 0.18);
 }
 
 .page-shell {
@@ -161,6 +244,7 @@ main {
   border-radius: 999px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.5);
+  color: var(--text);
 }
 
 .hero-link--primary {
@@ -358,6 +442,42 @@ main {
   color: var(--text);
 }
 
+html[data-theme="dark"] .site-header__inner,
+html[data-theme="dark"] .site-nav__link,
+html[data-theme="dark"] .site-control,
+html[data-theme="dark"] .site-control-group,
+html[data-theme="dark"] .help-nav__link,
+html[data-theme="dark"] .table-action,
+html[data-theme="dark"] .hero-link,
+html[data-theme="dark"] .filter-form__input,
+html[data-theme="dark"] .form-field select,
+html[data-theme="dark"] .form-field input,
+html[data-theme="dark"] .diagram-block,
+html[data-theme="dark"] .etl-node,
+html[data-theme="dark"] .help-audience-card {
+  background: rgba(12, 24, 28, 0.84);
+}
+
+html[data-theme="dark"] .hero-link--primary,
+html[data-theme="dark"] .help-nav__link--active,
+html[data-theme="dark"] .site-control--active {
+  color: #081215;
+}
+
+html[data-theme="dark"] .help-card--accent {
+  background: linear-gradient(180deg, rgba(79, 192, 170, 0.12), rgba(12, 24, 28, 0.92));
+}
+
+html[data-theme="dark"] .edit-row td,
+html[data-theme="dark"] .data-table tbody tr:hover,
+html[data-theme="dark"] .result-ok {
+  background: rgba(79, 192, 170, 0.09);
+}
+
+html[data-theme="dark"] .result-error {
+  background: rgba(168, 77, 48, 0.16);
+}
+
 .imports-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -488,6 +608,10 @@ main {
   background: rgba(255, 255, 255, 0.7);
   color: var(--accent-strong);
   cursor: pointer;
+}
+
+.table-action + .table-action {
+  margin-left: 8px;
 }
 
 .edit-row td {
@@ -824,6 +948,14 @@ main {
   .site-header__inner,
   .section-head {
     display: grid;
+  }
+
+  .site-header__actions {
+    justify-content: flex-start;
+  }
+
+  .site-header__controls {
+    justify-content: flex-start;
   }
 
   .site-nav,

@@ -1,20 +1,25 @@
 import Link from "next/link";
 
-const helpLinks = [
-  { href: "/help", label: "Overview" },
-  { href: "/help/executive", label: "FAQ ejecutiva" },
-  { href: "/help/functional", label: "Guia funcional" },
-  { href: "/help/positioning", label: "Posicionamiento" },
-  { href: "/help/platforms", label: "Medallion y ELT" },
-];
+import { getCopy } from "@/lib/copy";
+import { getRequestPreferences } from "@/lib/request-preferences";
 
 type HelpNavProps = {
   currentPath: string;
 };
 
-export function HelpNav({ currentPath }: HelpNavProps) {
+export async function HelpNav({ currentPath }: HelpNavProps) {
+  const { language } = await getRequestPreferences();
+  const t = getCopy(language).helpNav;
+  const helpLinks = [
+    { href: "/help", label: t.links.overview },
+    { href: "/help/executive", label: t.links.executive },
+    { href: "/help/functional", label: t.links.functional },
+    { href: "/help/positioning", label: t.links.positioning },
+    { href: "/help/platforms", label: t.links.platforms },
+  ];
+
   return (
-    <nav className="help-nav" aria-label="Secciones Help">
+    <nav className="help-nav" aria-label={t.ariaLabel}>
       {helpLinks.map((link) => (
         <Link
           key={link.href}
