@@ -5,6 +5,8 @@ import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
 import { createId } from "@/lib/ids";
 
+export const dynamic = "force-dynamic";
+
 const transitionSchema = z.object({
   entity: z.enum(["mapping", "group", "parameter"]),
   id: z.string().uuid(),

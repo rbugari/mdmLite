@@ -1,6 +1,8 @@
 import { requireAdminPage } from "@/lib/auth-server";
 import { query } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 type AuditPageProps = {
   searchParams?: Promise<{
     table?: string;

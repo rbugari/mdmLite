@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 
 import { importDemoWorkbook } from "@/lib/imports";
 
+export const dynamic = "force-dynamic";
+
 export async function POST() {
   try {
     const filePath = path.join(process.cwd(), "data", "demo", "input_mvp_ventas_perseida_v2.xlsx");

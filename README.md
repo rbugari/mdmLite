@@ -55,15 +55,17 @@ What each step does:
 
 - `install-and-start.bat` is the simplest first-run entrypoint: it configures if needed, installs, builds, and starts the app.
 - `configure-production.bat` creates or repairs `.env` interactively from a guided prompt.
-- `install-production.bat` validates `.env`, installs dependencies, applies the PostgreSQL schema, and creates a production build.
+- `install-production.bat` validates `.env`, installs dependencies, applies the PostgreSQL schema, creates a production build, and verifies `.next/standalone/server.js`.
 - `start-production.bat` starts the already-built standalone server on `APP_PORT`.
 - `smoke-test.bat` calls the homepage and `/api/health/db` to confirm the app is running and the database is reachable.
 
 If you want the easiest first try, run only `scripts\windows\install-and-start.bat`.
 
+That batch file is the official first-run entrypoint for the current Windows trial baseline.
+
 `install-production.bat` now opens the configurator automatically when `.env` is missing or invalid, so the first-run flow is already “configure + install” without editing files by hand.
 
-This is the current supported packaging baseline for customer-hosted trials on Windows. It is intentionally simple: Node.js + guided `.env` bootstrap + PostgreSQL + batch launchers.
+This is the current supported packaging baseline for customer-hosted trials on Windows. It is intentionally simple: Node.js + guided `.env` bootstrap + PostgreSQL + standalone production launcher.
 
 ## 📋 Project Status (v2)
 
@@ -168,7 +170,7 @@ MDM_Lite/
   - `vw_mdm_group_rule_active`
   - `vw_mdm_parameter_active`
 - ✅ **Change log:** Audit table for compliance (change_log.entity, actor, action, timestamp)
-- ✅ **Authentication:** `APP_ADMIN_EMAIL` + `APP_ADMIN_PASSWORD` for admin runtime access
+- ✅ **Authentication:** `APP_ADMIN_USERNAME` + `APP_ADMIN_PASSWORD` for admin runtime access
 
 ## 🧪 Testing Infrastructure
 

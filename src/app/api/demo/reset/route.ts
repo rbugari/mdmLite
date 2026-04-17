@@ -7,6 +7,8 @@ import { NextResponse } from "next/server";
 
 import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 
+export const dynamic = "force-dynamic";
+
 const execFileAsync = promisify(execFile);
 
 export const runtime = "nodejs";

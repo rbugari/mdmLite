@@ -100,7 +100,8 @@ async function login(page, identifier, password) {
   await page.locator('input[name="identifier"]').fill(identifier);
   await page.locator('input[name="password"]').fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL(/\/$/, { timeout: 15000 });
+  await page.waitForFunction(() => window.location.pathname !== "/auth/login", { timeout: 15000 });
+  await settleClientPage(page);
   await waitForBodyText(page, "Launch status");
 }
 
@@ -206,7 +207,7 @@ function languageGroup(page) {
 
 async function main() {
   const env = loadEnv(envPath);
-  const baseUrl = `http://localhost:${env.APP_PORT ?? "3003"}`;
+  const baseUrl = `http://127.0.0.1:${env.APP_PORT ?? "3003"}`;
   const stamp = stampValue();
   const report = {
     generatedAt: new Date().toISOString(),

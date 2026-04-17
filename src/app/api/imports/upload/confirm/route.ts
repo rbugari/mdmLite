@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { confirmUploadedPreview } from "@/lib/imports";
 
+export const dynamic = "force-dynamic";
+
 const confirmSchema = z.object({
   token: z.string().min(1, "Preview token is required."),
 });

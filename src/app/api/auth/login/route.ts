@@ -5,6 +5,8 @@ import { createSessionToken, getSessionCookieName, getSessionTtlSeconds } from "
 import { query } from "@/lib/db";
 import { env } from "@/lib/env";
 
+export const dynamic = "force-dynamic";
+
 const loginSchema = z.object({
   identifier: z.string().trim().min(1).optional(),
   email: z.string().trim().min(1).optional(),
@@ -13,6 +15,14 @@ const loginSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const requestUrl = new URL(request.url);
+    const forwardedProto = request.headers.get("x-forwarded-proto");
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const hostHeader = request.headers.get("host");
+    const effectiveHost = (forwardedHost ?? hostHeader ?? requestUrl.host).split(":")[0]?.trim().toLowerCase();
+    const isHttps = forwardedProto === "https" || requestUrl.protocol === "https:";
+    const isLocalHost = ["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(effectiveHost || requestUrl.hostname);
+
     const payload = loginSchema.parse(await request.json());
     const identifier = payload.identifier ?? payload.email ?? "";
     const validIdentifier = identifier === env.APP_ADMIN_USERNAME || identifier === env.APP_ADMIN_EMAIL;
@@ -61,7 +71,7 @@ export async function POST(request: Request) {
 
     response.cookies.set(getSessionCookieName(), token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isHttps && !isLocalHost,
       sameSite: "lax",
       path: "/",
       maxAge: getSessionTtlSeconds(),

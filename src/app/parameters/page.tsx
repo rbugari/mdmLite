@@ -7,6 +7,8 @@ import { getCopy } from "@/lib/copy";
 import { getActiveParameters } from "@/lib/mdm";
 import { getRequestPreferences } from "@/lib/request-preferences";
 
+export const dynamic = "force-dynamic";
+
 type ParametersPageProps = {
   searchParams?: Promise<{
     q?: string;

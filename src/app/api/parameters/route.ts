@@ -5,6 +5,8 @@ import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
 import { createId } from "@/lib/ids";
 
+export const dynamic = "force-dynamic";
+
 type ParameterRow = {
   id: string;
   parameter_key: string;

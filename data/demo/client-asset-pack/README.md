@@ -38,7 +38,7 @@ npm run e2e:client-asset
 Requisitos:
 
 1. app corriendo (ejemplo: npm run dev)
-2. APP_ADMIN_EMAIL y APP_ADMIN_PASSWORD en .env
+2. APP_ADMIN_USERNAME y APP_ADMIN_PASSWORD en .env
 
 ## Limpieza
 

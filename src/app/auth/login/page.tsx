@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 type LoginResult = {
@@ -9,7 +9,6 @@ type LoginResult = {
 };
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
 
@@ -41,8 +40,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(next);
-      router.refresh();
+      window.location.assign(next);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unknown login error.");
     } finally {

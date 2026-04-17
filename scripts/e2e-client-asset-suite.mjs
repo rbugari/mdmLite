@@ -483,7 +483,7 @@ async function runImportSuite(baseUrl, cookie) {
 }
 
 const env = loadEnv(".env");
-const baseUrl = env.APP_BASE_URL || `http://localhost:${env.APP_PORT || "3003"}`;
+const baseUrl = env.APP_BASE_URL || `http://127.0.0.1:${env.APP_PORT || "3003"}`;
 
 if (!env.APP_ADMIN_EMAIL || !env.APP_ADMIN_PASSWORD || !env.DATABASE_URL) {
   throw new Error("APP_ADMIN_EMAIL, APP_ADMIN_PASSWORD and DATABASE_URL are required in .env");

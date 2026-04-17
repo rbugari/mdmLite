@@ -7,6 +7,8 @@ import { getCopy } from "@/lib/copy";
 import { getActiveMappings } from "@/lib/mdm";
 import { getRequestPreferences } from "@/lib/request-preferences";
 
+export const dynamic = "force-dynamic";
+
 type MappingsPageProps = {
   searchParams?: Promise<{
     q?: string;

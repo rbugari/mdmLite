@@ -1,52 +1,52 @@
 {
-  "generatedAt": "2026-04-17T10:44:59.623Z",
+  "generatedAt": "2026-04-17T14:19:24.444Z",
   "overall": "GO",
-  "baseUrl": "http://localhost:3003",
+  "baseUrl": "http://127.0.0.1:3003",
   "steps": [
     {
       "name": "server-health",
       "ok": true,
-      "durationMs": 113
+      "durationMs": 118
     },
     {
       "name": "login-theme-language",
       "ok": true,
-      "durationMs": 11197
+      "durationMs": 6123
     },
     {
       "name": "help-pages",
       "ok": true,
-      "durationMs": 18615
+      "durationMs": 4625
     },
     {
       "name": "mapping-create-reject-approvals-search",
       "ok": true,
-      "durationMs": 10807
+      "durationMs": 3601
     },
     {
       "name": "group-create-approve-list-filters",
       "ok": true,
-      "durationMs": 11736
+      "durationMs": 6059
     },
     {
       "name": "parameter-create-approve-list-filters",
       "ok": true,
-      "durationMs": 11069
+      "durationMs": 5649
     },
     {
       "name": "mapping-edit-replacement-history-audit",
       "ok": true,
-      "durationMs": 22457
+      "durationMs": 10159
     },
     {
       "name": "imports-demo-and-upload",
       "ok": true,
-      "durationMs": 15165
+      "durationMs": 5181
     },
     {
       "name": "logout-and-protected-route",
       "ok": true,
-      "durationMs": 9612
+      "durationMs": 2894
     }
   ]
 }

@@ -5,6 +5,8 @@ import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
 import { createId } from "@/lib/ids";
 
+export const dynamic = "force-dynamic";
+
 const updateParameterSchema = z.object({
   parameterKey: z.string().min(1, "Parameter key is required."),
   parameterValue: z.string().min(1, "Parameter value is required."),

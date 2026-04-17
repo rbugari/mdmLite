@@ -7,6 +7,8 @@ import { getRequestPreferences } from "@/lib/request-preferences";
 
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],

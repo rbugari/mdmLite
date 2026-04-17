@@ -347,6 +347,7 @@ If all pass → **READY FOR DEMO/RELEASE**
 `.env` must contain:
 ```
 DATABASE_URL=postgresql://user:password@localhost/mdm_lite
+APP_ADMIN_USERNAME=admin
 APP_ADMIN_EMAIL=admin@example.com
 APP_ADMIN_PASSWORD=your-password
 ```
@@ -447,7 +448,7 @@ Error: Unauthorized: admin_only_action
 ```
 
 **Solution:**
-Tests use ADMIN role by default. Check `.env` for `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD`.
+Tests use ADMIN role by default. Check `.env` for `APP_ADMIN_USERNAME` and `APP_ADMIN_PASSWORD`.
 
 ### Test Data Left Behind
 ```

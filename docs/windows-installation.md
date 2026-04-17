@@ -34,6 +34,7 @@ If you prefer to inspect the target values, the minimum resulting environment is
 ```env
 DATABASE_URL=postgresql://user:pass@host:5432/mdm_lite?sslmode=verify-full
 DATABASE_SSL_MODE=require
+APP_ADMIN_USERNAME=admin
 APP_ADMIN_EMAIL=admin@example.com
 APP_ADMIN_PASSWORD=change-this-password
 APP_AUTH_SECRET=change-this-secret-now
@@ -56,6 +57,8 @@ Recommended first run:
 scripts\windows\install-and-start.bat
 ```
 
+This is the official first-run entrypoint for the Windows trial baseline.
+
 That single entrypoint will:
 
 1. open the configurator if `.env` is missing or invalid
@@ -71,6 +74,8 @@ scripts\windows\configure-production.bat
 scripts\windows\install-production.bat
 ```
 
+Those scripts are supported as separated maintenance steps, but they are not the primary first-time install path.
+
 If `.env` does not exist, or if it is incomplete, `install-production.bat` will launch the configurator automatically.
 
 Run:
@@ -85,7 +90,7 @@ That script performs five steps:
 2. validates required runtime environment variables
 3. installs dependencies
 4. applies the PostgreSQL schema
-5. creates the production build
+5. creates the production build and verifies `.next/standalone/server.js`
 
 ## Startup
 

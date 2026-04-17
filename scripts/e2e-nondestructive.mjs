@@ -122,7 +122,7 @@ function assertActiveViewState(items, oldId, newId, entityName) {
 
 const env = loadEnv(".env");
 const appPort = env.APP_PORT || "3003";
-const baseUrl = env.APP_BASE_URL || `http://localhost:${appPort}`;
+const baseUrl = env.APP_BASE_URL || `http://127.0.0.1:${appPort}`;
 
 if (!env.APP_ADMIN_EMAIL || !env.APP_ADMIN_PASSWORD) {
   throw new Error("APP_ADMIN_EMAIL and APP_ADMIN_PASSWORD are required in .env");

@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-04-17T13:32:41.968Z",
+  "mode": "demo-reset-seed",
+  "notes": [
+    "Deletes operational data from mappings, groups, parameters, import batches, and audit log.",
+    "Keeps base catalogs such as roles, users, entity types, and rule sets.",
+    "Seeds a didactic scenario for CLIENT and PRODUCT with approved and pending examples."
+  ],
+  "cleanup": {
+    "status": "ok",
+    "truncatedTables": [
+      "mdm_change_log",
+      "mdm_import_item",
+      "mdm_import_batch",
+      "mdm_mapping_rule",
+      "mdm_group_rule",
+      "mdm_parameter"
+    ]
+  },
+  "seeded": {
+    "adminUser": "admin@mdmlite.local",
+    "approvedMappings": 8,
+    "pendingMappings": 2,
+    "approvedGroups": 4,
+    "pendingGroups": 1,
+    "approvedParameters": 4,
+    "pendingParameters": 1,
+    "entities": [
+      "CLIENT",
+      "PRODUCT"
+    ],
+    "ruleSets": [
+      "demo_capacitacion_clientes",
+      "demo_capacitacion_productos"
+    ]
+  },
+  "validations": {
+    "counts": {
+      "mappings_total": 10,
+      "groups_total": 5,
+      "parameters_total": 5,
+      "mappings_pending": 2,
+      "groups_pending": 1,
+      "parameters_pending": 1,
+      "mapping_active": 8,
+      "group_active": 4,
+      "parameter_active": 4,
+      "audit_rows": 40
+    },
+    "status": "GO"
+  },
+  "samples": {
+    "activeClientMappings": [
+      {
+        "entity": "mapping",
+        "code": "ACME S.A.",
+        "value": "ACME_RETAIL",
+        "label": "Acme Retail"
+      },
+      {
+        "entity": "mapping",
+        "code": "ACME SA",
+        "value": "ACME_RETAIL",
+        "label": "Acme Retail"
+      },
+      {
+        "entity": "mapping",
+        "code": "MEGA STORE",
+        "value": "MEGA_STORE",
+        "label": "Mega Store"
+      }
+    ],
+    "pendingQueue": [
+      {
+        "entity": "mapping",
+        "label": "customer_name = ACME RETAIL LEGACY -> ACME_RETAIL",
+        "status": "pending_approval"
+      },
+      {
+        "entity": "mapping",
+        "label": "product_name = COFFEE PACK 1KG -> SKU_COFFEE_1KG",
+        "status": "pending_approval"
+      },
+      {
+        "entity": "group",
+        "label": "SKU_COFFEE_1KG -> PREMIUM_BEVERAGES",
+        "status": "pending_approval"
+      },
+      {
+        "entity": "parameter",
+        "label": "PVP_FACTOR = 1.10 @ ACME_RETAIL",
+        "status": "pending_approval"
+      }
+    ]
+  }
+}

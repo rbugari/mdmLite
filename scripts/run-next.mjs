@@ -54,8 +54,13 @@ if (!fs.existsSync(nextBin)) {
   process.exit(1);
 }
 
+if (command === "start" && !fs.existsSync(standaloneServer)) {
+  console.error("Standalone server not found. Run npm run build first and confirm .next/standalone/server.js exists.");
+  process.exit(1);
+}
+
 const child =
-  command === "start" && fs.existsSync(standaloneServer)
+  command === "start"
     ? spawn(process.execPath, [standaloneServer], {
         cwd: rootDir,
         stdio: "inherit",

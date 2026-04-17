@@ -5,6 +5,8 @@ import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
 import { createId } from "@/lib/ids";
 
+export const dynamic = "force-dynamic";
+
 const updateMappingSchema = z.object({
   sourceValue: z.string().min(1, "Source value is required."),
   targetValue: z.string().min(1, "Target value is required."),

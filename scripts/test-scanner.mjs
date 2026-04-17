@@ -89,7 +89,7 @@ function formatDuration(ms) {
 
 const env = loadEnv(path.join(process.cwd(), ".env"));
 const appPort = env.APP_PORT || "3003";
-const baseUrl = env.APP_BASE_URL || `http://localhost:${appPort}`;
+const baseUrl = env.APP_BASE_URL || `http://127.0.0.1:${appPort}`;
 
 const suite = ["typecheck", "e2e:nondestructive", "e2e:client-asset", "e2e:ui-workflows"];
 const startedAt = Date.now();

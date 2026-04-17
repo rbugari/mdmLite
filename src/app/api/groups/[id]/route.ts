@@ -5,6 +5,8 @@ import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
 import { createId } from "@/lib/ids";
 
+export const dynamic = "force-dynamic";
+
 const updateGroupSchema = z.object({
   memberValue: z.string().min(1, "Member value is required."),
   groupValue: z.string().min(1, "Group value is required."),

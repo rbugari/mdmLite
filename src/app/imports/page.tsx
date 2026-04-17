@@ -3,6 +3,8 @@ import { requireAdminPage } from "@/lib/auth-server";
 import { getCopy } from "@/lib/copy";
 import { getRequestPreferences } from "@/lib/request-preferences";
 
+export const dynamic = "force-dynamic";
+
 export default async function ImportsPage() {
   await requireAdminPage("/imports");
   const { language } = await getRequestPreferences();

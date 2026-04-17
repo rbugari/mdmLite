@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { getAdminIdentity, unauthorizedResponse } from "@/lib/auth-server";
 import { query } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 type AuditRow = {
   id: string;
   table_name: string;

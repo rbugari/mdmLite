@@ -1,36 +1,36 @@
 {
-  "generatedAt": "2026-04-17T10:46:52.198Z",
+  "generatedAt": "2026-04-17T14:20:10.543Z",
   "overall": "GO",
-  "baseUrl": "http://localhost:3003",
+  "baseUrl": "http://127.0.0.1:3003",
   "server": {
     "ok": true,
     "error": null
   },
-  "totalDurationMs": 139064,
+  "totalDurationMs": 70168,
   "steps": [
     {
       "script": "typecheck",
       "code": 0,
       "ok": true,
-      "durationMs": 3576
+      "durationMs": 5131
     },
     {
       "script": "e2e:nondestructive",
       "code": 0,
       "ok": true,
-      "durationMs": 5689
+      "durationMs": 4284
     },
     {
       "script": "e2e:client-asset",
       "code": 0,
       "ok": true,
-      "durationMs": 16225
+      "durationMs": 13711
     },
     {
       "script": "e2e:ui-workflows",
       "code": 0,
       "ok": true,
-      "durationMs": 113334
+      "durationMs": 46835
     }
   ]
 }

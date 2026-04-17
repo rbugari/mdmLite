@@ -3,6 +3,9 @@ setlocal
 
 cd /d "%~dp0\..\.."
 
+echo [INFO] Instalacion por fases para MDM Lite.
+echo [INFO] Para primera instalacion, el entrypoint oficial es scripts\windows\install-and-start.bat.
+
 where node >nul 2>&1
 if errorlevel 1 (
   echo [ERROR] Node.js no esta disponible en PATH.
@@ -46,7 +49,13 @@ echo [STEP] Generando build productivo...
 call npm.cmd run build
 if errorlevel 1 exit /b 1
 
+if not exist ".next\standalone\server.js" (
+  echo [ERROR] El build no genero .next\standalone\server.js.
+  exit /b 1
+)
+
 echo [OK] Instalacion completada.
 echo [INFO] La configuracion runtime quedo guardada en .env.
-echo [NEXT] Usa scripts\windows\start-production.bat para arrancar la app.
+echo [INFO] El launcher productivo quedo listo en .next\standalone\server.js.
+echo [NEXT] Usa scripts\windows\start-production.bat para arrancar la app si ya estas operando por fases.
 exit /b 0

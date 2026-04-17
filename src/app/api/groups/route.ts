@@ -6,6 +6,8 @@ import { query } from "@/lib/db";
 import { createId } from "@/lib/ids";
 import { getDefaultClientRuleContext } from "@/lib/mdm-write-context";
 
+export const dynamic = "force-dynamic";
+
 type GroupRow = {
   id: string;
   rule_set_code: string;

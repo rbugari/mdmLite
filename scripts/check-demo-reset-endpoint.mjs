@@ -37,7 +37,7 @@ function loadEnvFile(filePath) {
 
 loadEnvFile(envPath);
 
-const baseUrl = `http://localhost:${process.env.APP_PORT ?? "3003"}`;
+const baseUrl = `http://127.0.0.1:${process.env.APP_PORT ?? "3003"}`;
 const adminIdentifier = process.env.APP_ADMIN_USERNAME ?? process.env.APP_ADMIN_EMAIL;
 
 if (!adminIdentifier || !process.env.APP_ADMIN_PASSWORD) {
