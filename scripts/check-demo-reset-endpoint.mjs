@@ -38,16 +38,17 @@ function loadEnvFile(filePath) {
 loadEnvFile(envPath);
 
 const baseUrl = `http://localhost:${process.env.APP_PORT ?? "3003"}`;
+const adminIdentifier = process.env.APP_ADMIN_USERNAME ?? process.env.APP_ADMIN_EMAIL;
 
-if (!process.env.APP_ADMIN_EMAIL || !process.env.APP_ADMIN_PASSWORD) {
-  throw new Error("APP_ADMIN_EMAIL and APP_ADMIN_PASSWORD are required.");
+if (!adminIdentifier || !process.env.APP_ADMIN_PASSWORD) {
+  throw new Error("APP_ADMIN_USERNAME or APP_ADMIN_EMAIL, and APP_ADMIN_PASSWORD, are required.");
 }
 
 const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({
-    email: process.env.APP_ADMIN_EMAIL,
+    identifier: adminIdentifier,
     password: process.env.APP_ADMIN_PASSWORD,
   }),
 });

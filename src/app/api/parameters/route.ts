@@ -119,6 +119,7 @@ export async function POST(request: Request) {
       await query(
         `
           insert into mdm_change_log (
+            id,
             table_name,
             record_id,
             action_type,
@@ -129,7 +130,7 @@ export async function POST(request: Request) {
             values ($1, 'mdm_parameter', $2, 'create', $3::jsonb, $4, $5)
         `,
         [
-            createId(),
+          createId(),
           writeResult.rows[0].id,
           JSON.stringify({
             parameterKey: payload.parameterKey,

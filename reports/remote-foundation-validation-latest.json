@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-04-17T10:43:21.056Z",
+  "overall": "GO",
+  "baseUrl": "http://127.0.0.1:3003",
+  "appReachable": true,
+  "steps": [
+    {
+      "name": "env:check",
+      "required": true,
+      "ok": true,
+      "code": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"envFile\": \"C:\\\\proydev\\\\mdm_lite\\\\.env\",\n  \"appPort\": \"3003\",\n  \"databaseSslMode\": \"require\",\n  \"databaseUrlMasked\": \"postgresql://neondb_owner:***@ep-late-lake-aba4ullt.eu-west-2.aws.neon.tech/neondb?sslmode=verify-full\",\n  \"adminUsername\": \"admin\",\n  \"adminEmail\": \"rfbugari@gmail.com\"\n}",
+      "stderr": ""
+    },
+    {
+      "name": "db:apply",
+      "required": true,
+      "ok": true,
+      "code": 0,
+      "stdout": "Schema applied successfully.",
+      "stderr": ""
+    },
+    {
+      "name": "demo:reset",
+      "required": true,
+      "ok": true,
+      "code": 0,
+      "stdout": "demo_reset=ok\ndemo_seeded_entities=CLIENT,PRODUCT\ndemo_counts=mappings:10,groups:5,parameters:5\ndemo_pending_queue=4\ndemo_active_views=mappings:8,groups:4,parameters:4\ndemo_audit_rows=40\ndemo_report=C:\\proydev\\mdm_lite\\reports\\demo-reset-latest.json",
+      "stderr": ""
+    },
+    {
+      "name": "smoke:prod",
+      "required": true,
+      "ok": true,
+      "code": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"baseUrl\": \"http://127.0.0.1:3003\",\n  \"checks\": {\n    \"rootStatus\": 307,\n    \"dbStatus\": 200,\n    \"sslMode\": \"require\"\n  }\n}",
+      "stderr": ""
+    },
+    {
+      "name": "demo:reset:endpoint",
+      "required": true,
+      "ok": true,
+      "code": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"counts\": {\n    \"mappings_total\": 10,\n    \"groups_total\": 5,\n    \"parameters_total\": 5,\n    \"mappings_pending\": 2,\n    \"groups_pending\": 1,\n    \"parameters_pending\": 1,\n    \"mapping_active\": 8,\n    \"group_active\": 4,\n    \"parameter_active\": 4,\n    \"audit_rows\": 40\n  }\n}",
+      "stderr": ""
+    }
+  ]
+}

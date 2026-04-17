@@ -10,3 +10,5 @@ coverage/
 .env.production.local
 *.log
 *.tsbuildinfo
+.playwright-mcp/
+reports/e2e-ui-workflows-artifacts/

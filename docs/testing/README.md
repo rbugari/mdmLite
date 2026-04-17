@@ -2,6 +2,35 @@
 
 Complete reference for running, debugging, and extending tests in MDM Lite.
 
+## Remote Foundation Validation
+
+When testing against a temporary remote PostgreSQL instance, use:
+
+```bash
+npm run foundation:validate-remote
+```
+
+What it does:
+
+1. validates runtime environment from `.env`
+2. applies the schema on the target PostgreSQL instance
+3. runs `demo:reset` against that database
+4. if the app is already running, also executes:
+  - `smoke:prod`
+  - demo reset endpoint validation
+
+Output:
+
+- console summary with `GO/NO_GO`
+- report in `reports/remote-foundation-validation-latest.json`
+
+Use this flow when the database is ephemeral and the goal is to prove:
+
+1. remote connectivity works
+2. schema bootstrap works on a clean database
+3. demo seed/reset works remotely
+4. app health and endpoint checks also pass when runtime is up
+
 ## Quick Start
 
 ```bash

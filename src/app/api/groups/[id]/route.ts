@@ -91,6 +91,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       await query(
         `
           insert into mdm_change_log (
+            id,
             table_name,
             record_id,
             action_type,

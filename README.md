@@ -35,6 +35,8 @@ npm run demo:reset        # Wipe operational data and seed a didactic scenario
 
 **Expected:** Server ready in ~3s, full validation suite in ~4-5 min
 
+System login is separate from the PostgreSQL connection. `DATABASE_URL` is only for the app to connect to the database. The web login uses `APP_ADMIN_USERNAME` and `APP_ADMIN_PASSWORD`, while `APP_ADMIN_EMAIL` is only the internal ADMIN user mapping inside `mdm_user`.
+
 For a short, explainable product walkthrough, use `npm run demo:reset` and then follow [data/demo/didactic-scenario.md](data/demo/didactic-scenario.md).
 
 ## Windows-First Install
@@ -220,12 +222,15 @@ Create `.env`:
 ```
 DATABASE_URL=postgresql://user:pass@localhost/mdm_lite
 DATABASE_SSL_MODE=disable
+APP_ADMIN_USERNAME=admin
 APP_ADMIN_EMAIL=admin@example.com
 APP_ADMIN_PASSWORD=change-this-password
 APP_AUTH_SECRET=change-this-secret-now
 ```
 
 `DATABASE_SSL_MODE` supports `disable`, `require`, and `no-verify`. Use `require` for managed PostgreSQL with valid certificates, `disable` for local trusted setups, and `no-verify` only for temporary compatibility tests.
+
+For managed PostgreSQL endpoints, prefer `?sslmode=verify-full` in `DATABASE_URL` so the connection-string behavior stays aligned with the current secure default in `pg` and upcoming driver changes.
 
 If the production smoke test reports `self-signed certificate in certificate chain`, the current database endpoint is not presenting a certificate chain that Node.js can validate under `require`. In that case, fix the certificate path or use `no-verify` only as a temporary controlled fallback.
 

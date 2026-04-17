@@ -52,7 +52,7 @@ Completed in this phase:
 
 Remaining checks:
 
-1. validate against at least one managed PostgreSQL service with certificate validation enabled
+1. validate against at least one managed PostgreSQL service with certificate validation enabled - completed with Neon PostgreSQL using `sslmode=verify-full`
 2. decide whether certificate-path support is needed in the next iteration
 
 ## Milestone 3 - Windows-First Packaging

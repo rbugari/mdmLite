@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Languages, Moon, Sun } from "lucide-react";
 
+import { DbStatusIndicator } from "@/components/db-status-indicator";
 import { getCopy } from "@/lib/copy";
 import { useUiPreferences } from "@/components/ui-preferences-provider";
 
@@ -33,6 +34,8 @@ export function SiteHeader() {
           </nav>
 
           <div className="site-header__controls">
+            <DbStatusIndicator copy={t.dbStatus} />
+
             <button type="button" className="site-control" onClick={toggleTheme} aria-label={t.themeToggle}>
               {theme === "light" ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}
               <span>{theme === "light" ? t.darkTheme : t.lightTheme}</span>

@@ -8,6 +8,7 @@
     "start": "node scripts/run-next.mjs start",
     "env:init": "node scripts/configure-production.mjs",
     "env:check": "node scripts/validate-runtime-env.mjs",
+    "foundation:validate-remote": "node scripts/validate-remote-foundation.mjs",
     "smoke:prod": "node scripts/smoke-production.mjs",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",

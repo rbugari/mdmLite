@@ -140,7 +140,11 @@ try {
     validationMessage: "Debe ser disable, require o no-verify.",
   });
 
-  baseValues.APP_ADMIN_EMAIL = await promptWithDefault(rl, "APP_ADMIN_EMAIL", baseValues.APP_ADMIN_EMAIL, {
+  baseValues.APP_ADMIN_USERNAME = await promptWithDefault(rl, "APP_ADMIN_USERNAME", baseValues.APP_ADMIN_USERNAME || "admin", {
+    required: true,
+  });
+
+  baseValues.APP_ADMIN_EMAIL = await promptWithDefault(rl, "APP_ADMIN_EMAIL (email interno del admin en la app)", baseValues.APP_ADMIN_EMAIL, {
     required: true,
     validate: (value) => value.includes("@"),
     validationMessage: "Debe ser un email valido.",
@@ -169,6 +173,7 @@ try {
   console.log("\n[OK] Archivo .env generado o actualizado.");
   console.log(`[INFO] DATABASE_URL=${maskConnectionString(baseValues.DATABASE_URL)}`);
   console.log(`[INFO] DATABASE_SSL_MODE=${baseValues.DATABASE_SSL_MODE}`);
+  console.log(`[INFO] APP_ADMIN_USERNAME=${baseValues.APP_ADMIN_USERNAME}`);
   console.log(`[INFO] APP_ADMIN_EMAIL=${baseValues.APP_ADMIN_EMAIL}`);
   console.log(`[INFO] APP_PORT=${baseValues.APP_PORT}`);
   console.log(`[INFO] APP_AUTH_SECRET generado=${currentValues.APP_AUTH_SECRET ? "no" : "si"}`);

@@ -23,7 +23,7 @@ export default function LoginPage() {
 
     const formData = new FormData(event.currentTarget);
     const payload = {
-      email: String(formData.get("email") ?? "").trim(),
+      identifier: String(formData.get("identifier") ?? "").trim(),
       password: String(formData.get("password") ?? ""),
     };
 
@@ -55,12 +55,12 @@ export default function LoginPage() {
       <section className="table-panel table-panel--padded">
         <span className="eyebrow">Authentication</span>
         <h1>Admin login</h1>
-        <p>Sign in with the configured admin account to manage rules and approvals.</p>
+        <p>Sign in with the system admin account to manage rules and approvals. This is separate from the database user.</p>
 
         <form onSubmit={(event) => void handleSubmit(event)} className="inline-form-grid" style={{ marginTop: 16 }}>
           <label className="form-field">
-            <span>Email</span>
-            <input name="email" type="email" required autoComplete="username" defaultValue="admin@mdmlite.local" />
+            <span>System user</span>
+            <input name="identifier" type="text" required autoComplete="username" defaultValue="admin" />
           </label>
           <label className="form-field">
             <span>Password</span>

@@ -2,6 +2,25 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 
+const scriptCommands = {
+  typecheck: {
+    command: process.execPath,
+    args: [path.join(process.cwd(), "node_modules", "typescript", "bin", "tsc"), "--noEmit"],
+  },
+  "e2e:nondestructive": {
+    command: process.execPath,
+    args: [path.join(process.cwd(), "scripts", "e2e-nondestructive.mjs")],
+  },
+  "e2e:client-asset": {
+    command: process.execPath,
+    args: [path.join(process.cwd(), "scripts", "e2e-client-asset-suite.mjs")],
+  },
+  "e2e:ui-workflows": {
+    command: process.execPath,
+    args: [path.join(process.cwd(), "scripts", "e2e-ui-workflows.mjs")],
+  },
+};
+
 function loadEnv(pathToEnv) {
   const txt = fs.readFileSync(pathToEnv, "utf8");
   const env = {};
@@ -17,20 +36,19 @@ function loadEnv(pathToEnv) {
 }
 
 function runNpmScript(scriptName) {
-  const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
   const startedAt = Date.now();
+  const scriptCommand = scriptCommands[scriptName];
 
   return new Promise((resolve) => {
-    const child =
-      process.platform === "win32"
-        ? spawn("cmd.exe", ["/d", "/s", "/c", `${npmCmd} run ${scriptName}`], {
-            stdio: "inherit",
-            cwd: process.cwd(),
-          })
-        : spawn(npmCmd, ["run", scriptName], {
-            stdio: "inherit",
-            cwd: process.cwd(),
-          });
+    const child = scriptCommand
+      ? spawn(scriptCommand.command, scriptCommand.args, {
+          stdio: "inherit",
+          cwd: process.cwd(),
+        })
+      : spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["run", scriptName], {
+          stdio: "inherit",
+          cwd: process.cwd(),
+        });
 
     child.on("close", (code) => {
       resolve({

@@ -6,15 +6,18 @@ import { query } from "@/lib/db";
 import { env } from "@/lib/env";
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  identifier: z.string().trim().min(1).optional(),
+  email: z.string().trim().min(1).optional(),
   password: z.string().min(1),
 });
 
 export async function POST(request: Request) {
   try {
     const payload = loginSchema.parse(await request.json());
+    const identifier = payload.identifier ?? payload.email ?? "";
+    const validIdentifier = identifier === env.APP_ADMIN_USERNAME || identifier === env.APP_ADMIN_EMAIL;
 
-    if (payload.email !== env.APP_ADMIN_EMAIL || payload.password !== env.APP_ADMIN_PASSWORD) {
+    if (!validIdentifier || payload.password !== env.APP_ADMIN_PASSWORD) {
       return NextResponse.json({ ok: false, error: "Invalid credentials." }, { status: 401 });
     }
 
@@ -28,7 +31,7 @@ export async function POST(request: Request) {
           and r.code = 'ADMIN'
         limit 1
       `,
-      [payload.email],
+      [env.APP_ADMIN_EMAIL],
     );
 
     let resolvedAdmin = configuredAdminResult.rows[0];

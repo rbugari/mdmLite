@@ -12,6 +12,7 @@ La documentacion vigente de MDM Lite queda consolidada en estos documentos:
 
 ### Testing & Operations
 5. **testing/README.md** - Guia completa de testing con cuatro suites (typecheck, e2e:nondestructive, e2e:client-asset, test:scan).
+6. **testing/README.md / Remote Foundation Validation** - Flujo para validar DB PostgreSQL remota efimera y smoke operativo.
 
 ## Orden de lectura recomendado
 

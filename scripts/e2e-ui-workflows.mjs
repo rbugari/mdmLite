@@ -94,10 +94,10 @@ async function settleClientPage(page) {
   await page.waitForTimeout(500);
 }
 
-async function login(page, email, password) {
+async function login(page, identifier, password) {
   await page.goto("/auth/login", { waitUntil: "domcontentloaded" });
   await settleClientPage(page);
-  await page.locator('input[name="email"]').fill(email);
+  await page.locator('input[name="identifier"]').fill(identifier);
   await page.locator('input[name="password"]').fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.waitForURL(/\/$/, { timeout: 15000 });
@@ -239,7 +239,12 @@ async function main() {
 
       if (page) {
         const safeName = name.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-        await page.screenshot({ path: path.join(artifactDir, `${safeName}.png`), fullPage: true });
+
+        try {
+          await page.screenshot({ path: path.join(artifactDir, `${safeName}.png`), fullPage: true });
+        } catch {
+          // Preserve the original failure when the page or browser is already gone.
+        }
       }
 
       throw error;
@@ -248,7 +253,7 @@ async function main() {
 
   try {
     ensure(env.DATABASE_URL, "DATABASE_URL is required");
-    ensure(env.APP_ADMIN_EMAIL, "APP_ADMIN_EMAIL is required");
+    ensure(env.APP_ADMIN_USERNAME || env.APP_ADMIN_EMAIL, "APP_ADMIN_USERNAME or APP_ADMIN_EMAIL is required");
     ensure(env.APP_ADMIN_PASSWORD, "APP_ADMIN_PASSWORD is required");
 
     await runStep("server-health", async () => {
@@ -264,7 +269,7 @@ async function main() {
     page = await context.newPage();
 
     await runStep("login-theme-language", async () => {
-      await login(page, env.APP_ADMIN_EMAIL, env.APP_ADMIN_PASSWORD);
+      await login(page, env.APP_ADMIN_USERNAME ?? env.APP_ADMIN_EMAIL, env.APP_ADMIN_PASSWORD);
 
       const initialTheme = await page.locator("html").getAttribute("data-theme");
       await page.getByRole("button", { name: "Switch color theme" }).click();

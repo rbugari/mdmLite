@@ -50,6 +50,7 @@ loadEnvFile(envPath);
 ensure(fs.existsSync(envPath), ".env file not found in project root.");
 ensure(process.env.DATABASE_URL, "DATABASE_URL is required.");
 ensure(process.env.DATABASE_SSL_MODE, "DATABASE_SSL_MODE is required.");
+ensure(process.env.APP_ADMIN_USERNAME, "APP_ADMIN_USERNAME is required.");
 ensure(process.env.APP_ADMIN_EMAIL, "APP_ADMIN_EMAIL is required.");
 ensure(process.env.APP_ADMIN_PASSWORD, "APP_ADMIN_PASSWORD is required.");
 ensure(process.env.APP_AUTH_SECRET, "APP_AUTH_SECRET is required.");
@@ -57,7 +58,7 @@ ensure(process.env.APP_AUTH_SECRET, "APP_AUTH_SECRET is required.");
 const sslMode = process.env.DATABASE_SSL_MODE;
 ensure(["disable", "require", "no-verify"].includes(sslMode), "DATABASE_SSL_MODE must be disable, require, or no-verify.");
 ensure((process.env.APP_AUTH_SECRET ?? "").length >= 16, "APP_AUTH_SECRET must be at least 16 characters.");
-ensure((process.env.APP_ADMIN_PASSWORD ?? "").length >= 8, "APP_ADMIN_PASSWORD must be at least 8 characters.");
+ensure((process.env.APP_ADMIN_PASSWORD ?? "").length >= 1, "APP_ADMIN_PASSWORD must not be empty.");
 
 const summary = {
   ok: true,
@@ -65,6 +66,7 @@ const summary = {
   appPort: process.env.APP_PORT ?? "3003",
   databaseSslMode: sslMode,
   databaseUrlMasked: maskConnectionString(process.env.DATABASE_URL),
+  adminUsername: process.env.APP_ADMIN_USERNAME,
   adminEmail: process.env.APP_ADMIN_EMAIL,
 };
 

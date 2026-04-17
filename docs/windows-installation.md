@@ -32,7 +32,7 @@ scripts\windows\configure-production.bat
 If you prefer to inspect the target values, the minimum resulting environment is:
 
 ```env
-DATABASE_URL=postgresql://user:pass@host:5432/mdm_lite
+DATABASE_URL=postgresql://user:pass@host:5432/mdm_lite?sslmode=verify-full
 DATABASE_SSL_MODE=require
 APP_ADMIN_EMAIL=admin@example.com
 APP_ADMIN_PASSWORD=change-this-password
@@ -43,6 +43,7 @@ APP_PORT=3003
 Guidance:
 
 - Use `DATABASE_SSL_MODE=require` for managed PostgreSQL with valid certificates.
+- Prefer `sslmode=verify-full` in `DATABASE_URL` for managed PostgreSQL so Node.js and `pg` keep certificate validation behavior explicit.
 - Use `DATABASE_SSL_MODE=disable` for trusted local/private setups.
 - Use `DATABASE_SSL_MODE=no-verify` only as a temporary compatibility fallback.
 - If `/api/health/db` reports `self-signed certificate in certificate chain`, the current certificate cannot be validated by Node.js with `require`; for customer trials, move temporarily to `no-verify` only if that matches the customer's security policy.
