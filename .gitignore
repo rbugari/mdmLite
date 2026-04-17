@@ -12,3 +12,5 @@ coverage/
 *.tsbuildinfo
 .playwright-mcp/
 reports/e2e-ui-workflows-artifacts/
+handoff/build/
+handoff/*.zip

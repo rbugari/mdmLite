@@ -16,6 +16,8 @@ La documentacion vigente de MDM Lite queda consolidada en estos documentos:
 9. **trial-support-baseline.md** - Frontera de soporte y diagnostico minimo para el primer trial.
 10. **trial-readiness-status.md** - Estado actual del baseline trial y resultado de la ultima validacion.
 11. **trial-known-limitations.md** - Registro de limitaciones aceptadas y bloqueos no aceptados.
+12. **trial-install-access-and-db-guide.md** - Guion practico para instalar en otra PC, acceder a la app y validar PostgreSQL.
+13. **../handoff/executive-brief.md** - Resumen ejecutivo de una pagina para compartir el trial.
 
 ### Testing & Operations
 5. **testing/README.md** - Guia completa de testing con cuatro suites (typecheck, e2e:nondestructive, e2e:client-asset, test:scan).
@@ -44,6 +46,8 @@ La documentacion vigente de MDM Lite queda consolidada en estos documentos:
 7. trial-support-baseline.md
 8. trial-readiness-status.md
 9. trial-known-limitations.md
+10. trial-install-access-and-db-guide.md
+11. ../handoff/executive-brief.md
 
 ## Criterio editorial
 
