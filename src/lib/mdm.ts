@@ -318,15 +318,27 @@ export async function getActiveGroups(
 }
 
 export async function getDashboardStats() {
-  const [mappingCount, groupCount, parameterCount] = await Promise.all([
+  const [mappingCount, groupCount, parameterCount, pendingApprovals, pendingCandidates] = await Promise.all([
     query<CountRow>("select count(*)::text as count from vw_mdm_mapping_rule_active"),
     query<CountRow>("select count(*)::text as count from vw_mdm_group_rule_active"),
     query<CountRow>("select count(*)::text as count from vw_mdm_parameter_active"),
+    query<CountRow>(`
+      select count(*)::text as count from (
+        select id from mdm_mapping_rule where is_active = true and status = 'pending_approval'
+        union all
+        select id from mdm_group_rule where is_active = true and status = 'pending_approval'
+        union all
+        select id from mdm_parameter where is_active = true and status = 'pending_approval'
+      ) t
+    `),
+    query<CountRow>("select count(*)::text as count from mdm_candidate where status = 'pending'"),
   ]);
 
   return {
     mappings: Number(mappingCount.rows[0]?.count ?? 0),
     groups: Number(groupCount.rows[0]?.count ?? 0),
     parameters: Number(parameterCount.rows[0]?.count ?? 0),
+    pendingApprovals: Number(pendingApprovals.rows[0]?.count ?? 0),
+    pendingCandidates: Number(pendingCandidates.rows[0]?.count ?? 0),
   };
 }

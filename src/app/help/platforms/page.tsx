@@ -172,6 +172,26 @@ export default async function PlatformsHelpPage() {
               </ol>
             </div>
           </article>
+          <article className="help-card">
+            <div className="help-card__section">
+              <h3>{t.dbtGuideTitle}</h3>
+              <ol className="help-list help-list--ordered">
+                {t.dbtGuideSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          </article>
+          <article className="help-card">
+            <div className="help-card__section">
+              <h3>{t.openlineageGuideTitle}</h3>
+              <ol className="help-list help-list--ordered">
+                {t.openlineageGuideSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          </article>
         </div>
       </section>
       <section className="help-diagram help-diagram-card">

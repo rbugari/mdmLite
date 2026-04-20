@@ -61,6 +61,14 @@ export default async function HomePage() {
               <strong>{stats.parameters}</strong>
               <span>{t.statLabels.parameters}</span>
             </div>
+            <div>
+              <strong>{stats.pendingApprovals}</strong>
+              <span>{t.statLabels.pendingApprovals}</span>
+            </div>
+            <div>
+              <strong>{stats.pendingCandidates}</strong>
+              <span>{t.statLabels.pendingCandidates}</span>
+            </div>
           </div>
 
           <DemoResetButton />
