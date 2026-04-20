@@ -27,11 +27,30 @@ improve how rule candidates enter the system without overloading MDM with code i
 Goal:
 make review, approval, and technical consumption robust and explainable.
 
+## API Usage Principle
+
+MDM Lite uses two different access patterns depending on the use case.
+
+### Admin operations
+
+The REST API (`/api/mappings`, `/api/groups`, `/api/parameters`, `/api/workflow`, etc.) is the correct channel for admin UI operations: create, edit, approve, reject, import. Volume is low and latency is acceptable. No change needed here.
+
+### ETL and platform consumption
+
+Row-by-row API calls for ETL lookups are the wrong pattern. When a pipeline transforms thousands of records, querying the API once per row creates unnecessary overhead and coupling. The correct model is:
+
+1. For PostgreSQL-compatible platforms (Databricks via Lakebase, Fabric via Azure PostgreSQL): connect directly via JDBC or native connector to the active views. No API needed.
+2. For platforms without a native PostgreSQL connector (Snowflake, others): use the snapshot export endpoint (see v0.3.1) to download the full active views as files and load them into a local table or stage. One call per pipeline run, not per row.
+
+This principle should be preserved in all future consumption features.
+
 ## Release Direction
 
 ## v0.2 - Operational Hardening
 
-### Scope
+### Status: closed
+
+### Scope delivered
 
 1. login for admin
 2. approval workflow visible in UI
@@ -40,27 +59,49 @@ make review, approval, and technical consumption robust and explainable.
 5. richer filters and pagination
 6. import preview before confirmation
 
-### Acceptance criteria
-
-1. rules can move through draft, pending, approved, rejected, inactive
-2. approved records are not edited destructively
-3. audit can be inspected
-4. the admin flow is authenticated
-
 ## v0.3 - Candidate Review Layer
+
+### Status: closed
+
+### Scope delivered
+
+1. candidate storage
+2. candidate list and detail review experience
+3. evidence and confidence visibility
+4. approve, reject, and promote actions
+5. audited promotion into mappings, groups, or parameters
+
+## v0.3.1 - Platform Consumption Connectors
+
+### Status: next
+
+### Objective
+
+Enable native and performant consumption from modern data platforms without requiring row-by-row API calls.
 
 ### Scope
 
-1. introduce candidate storage
-2. support candidate review and promotion
-3. separate detected suggestions from approved rules
-4. define stable candidate contract with evidence and confidence
+1. snapshot export endpoint: `GET /api/export/snapshot` returning a ZIP with one CSV per active view
+2. individual view exports: `GET /api/export/mappings.csv`, `GET /api/export/groups.csv`, `GET /api/export/parameters.csv`
+3. authentication required on all export endpoints (same session or token)
+4. platform connection guides in Help for Databricks (Lakebase + JDBC) and Fabric (Azure PostgreSQL + Dataflow Gen2)
+
+### What this solves
+
+Databricks and Fabric can consume rules natively via SQL without any export step. The snapshot export solves the Snowflake case and any other platform that cannot directly query PostgreSQL.
 
 ### Acceptance criteria
 
-1. a candidate can be reviewed without entering production tables
-2. approved candidates can be promoted to mappings, groups, or parameters
-3. evidence remains visible throughout the review process
+1. a pipeline can download the full active rules in a single HTTP call
+2. the output format is flat CSV, one file per entity type
+3. the call is authenticated and logs the export in audit
+4. Databricks and Fabric integration guides are live in Help with concrete steps
+
+### What this does not include
+
+1. push connectors or CDC
+2. scheduled export jobs inside the product
+3. Snowflake-native connector (the client handles stage loading from the downloaded file)
 
 ## v0.4 - Documentation Discovery
 
@@ -163,10 +204,9 @@ This preserves clean boundaries between analysis and governance.
 
 ## Immediate Next Steps
 
-1. harden governance first
-2. add candidate layer second
-3. add documentation discovery third
-4. add external candidate ingestion after the candidate layer is stable
+1. v0.3.1: snapshot export + platform guides (Databricks, Fabric)
+2. v0.4: documentation discovery from markdown and business notes
+3. v0.5: external candidate input from upstream analyzers
 
 ## Success Condition
 

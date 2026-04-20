@@ -115,8 +115,10 @@ These define the next roadmap, not the validity of the current MVP.
 
 ### Platform gaps
 
-1. Help shows platform consumption patterns, but there are no packaged connectors for Fabric, Databricks, or Snowflake
-2. technical consumption is SQL-view based, not event-driven or CDC-driven
+1. Databricks: resolved via Lakebase (PostgreSQL-compatible endpoint). Notebooks and jobs connect via JDBC directly to the active views. No packaged connector needed.
+2. Microsoft Fabric: resolved when the instance runs on Azure Database for PostgreSQL. Fabric connects natively via the Dataflow Gen2 or Data Factory PostgreSQL connector and ingests active views directly into OneLake. If the instance runs on Neon or another external host, the same connector applies but requires network access configuration.
+3. Snowflake: gap remains. No native PostgreSQL connector in Snowflake. Requires an external sync tool (Fivetran, Airbyte) or a periodic export feature not yet implemented in the product.
+4. technical consumption is SQL-view based, not event-driven or CDC-driven
 
 ## Functional Contract For v2 MVP
 

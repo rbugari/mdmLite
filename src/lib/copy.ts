@@ -787,15 +787,15 @@ order by parameter_scope_type, parameter_scope_value;`,
       platformPatterns: [
         {
           platform: "Databricks",
-          pattern: "Curated tables or views in Unity Catalog, notebooks, or jobs that read rules from PostgreSQL or a controlled replica.",
+          pattern: "Enable Lakebase on the workspace to get a PostgreSQL-compatible endpoint. Notebooks, jobs, or Spark reads connect directly via JDBC to the active views. No additional connector or export step is needed.",
         },
         {
           platform: "Microsoft Fabric",
-          pattern: "Dataflows, notebooks, or pipelines that query active views to enrich Silver and Gold layers.",
+          pattern: "Recommended path: provision an Azure Database for PostgreSQL instance and point MDM Lite at it. Fabric connects natively to Azure PostgreSQL via the Dataflow Gen2 or Data Factory PostgreSQL connector and loads the active views directly into OneLake without an intermediate export.",
         },
         {
           platform: "Snowflake",
-          pattern: "ELT in SQL or dbt consuming active views for normalization before marts or semantic models.",
+          pattern: "ELT in SQL or dbt consuming active views for normalization before marts or semantic models. Requires an external sync tool such as Fivetran or Airbyte, or a periodic export step.",
         },
       ],
       eltMessages: [

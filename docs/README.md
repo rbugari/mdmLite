@@ -18,6 +18,7 @@ La documentacion vigente de MDM Lite queda consolidada en estos documentos:
 11. **trial-known-limitations.md** - Registro de limitaciones aceptadas y bloqueos no aceptados.
 12. **trial-install-access-and-db-guide.md** - Guion practico para instalar en otra PC, acceder a la app y validar PostgreSQL.
 13. **../handoff/executive-brief.md** - Resumen ejecutivo de una pagina para compartir el trial.
+14. **functional-use-cases-and-examples.md** - Casos de uso y ejemplos concretos para entender cada funcionalidad actual.
 
 ### Testing & Operations
 5. **testing/README.md** - Guia completa de testing con cuatro suites (typecheck, e2e:nondestructive, e2e:client-asset, test:scan).
@@ -29,6 +30,7 @@ La documentacion vigente de MDM Lite queda consolidada en estos documentos:
 1. product-definition.md
 2. current-state-and-contracts.md
 3. prd-v2-operational-hardening.md
+4. functional-use-cases-and-examples.md
 
 ### Para operar/mantener
 1. [../README.md](../README.md) - Quick start y overview
