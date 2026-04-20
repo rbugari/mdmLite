@@ -9,6 +9,11 @@ const envSchema = z.object({
   APP_ADMIN_PASSWORD: z.string().min(1).default("change-this-password"),
   APP_AUTH_SECRET: z.string().min(16).default("change-this-secret-now"),
   APP_PORT: z.string().default("3003"),
+  // LLM configuration (v0.4 document discovery). Optional - feature disabled when absent.
+  LLM_PROVIDER: z.enum(["openai", "azure-openai", "none"]).default("none"),
+  LLM_API_KEY: z.string().optional(),
+  LLM_MODEL: z.string().default("gpt-4o-mini"),
+  LLM_AZURE_ENDPOINT: z.string().optional(),
 });
 
 const parsedEnv = envSchema.safeParse({
@@ -20,6 +25,10 @@ const parsedEnv = envSchema.safeParse({
   APP_ADMIN_PASSWORD: process.env.APP_ADMIN_PASSWORD,
   APP_AUTH_SECRET: process.env.APP_AUTH_SECRET,
   APP_PORT: process.env.APP_PORT,
+  LLM_PROVIDER: process.env.LLM_PROVIDER,
+  LLM_API_KEY: process.env.LLM_API_KEY,
+  LLM_MODEL: process.env.LLM_MODEL,
+  LLM_AZURE_ENDPOINT: process.env.LLM_AZURE_ENDPOINT,
 });
 
 if (!parsedEnv.success) {

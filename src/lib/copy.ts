@@ -12,6 +12,7 @@ export const copy = {
         { href: "/approvals", label: "Approvals" },
         { href: "/audit", label: "Audit" },
         { href: "/imports", label: "Imports" },
+        { href: "/candidates", label: "Candidates" },
         { href: "/help", label: "Help" },
       ],
       dbStatus: {
@@ -891,6 +892,7 @@ order by parameter_scope_type, parameter_scope_value;`,
         { href: "/approvals", label: "Aprobaciones" },
         { href: "/audit", label: "Auditoria" },
         { href: "/imports", label: "Importacion" },
+        { href: "/candidates", label: "Candidatos" },
         { href: "/help", label: "Ayuda" },
       ],
       dbStatus: {
