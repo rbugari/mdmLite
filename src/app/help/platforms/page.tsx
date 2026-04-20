@@ -136,6 +136,44 @@ export default async function PlatformsHelpPage() {
           </div>
         </article>
       </section>
+      <section className="help-examples table-panel table-panel--padded">
+        <div className="form-header">
+          <span className="eyebrow">{t.connectionGuidesEyebrow}</span>
+          <h2>{t.connectionGuidesTitle}</h2>
+        </div>
+        <div className="help-grid help-grid--three">
+          <article className="help-card">
+            <div className="help-card__section">
+              <h3>{t.databricksGuideTitle}</h3>
+              <ol className="help-list help-list--ordered">
+                {t.databricksGuideSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          </article>
+          <article className="help-card">
+            <div className="help-card__section">
+              <h3>{t.fabricGuideTitle}</h3>
+              <ol className="help-list help-list--ordered">
+                {t.fabricGuideSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          </article>
+          <article className="help-card">
+            <div className="help-card__section">
+              <h3>{t.snapshotGuideTitle}</h3>
+              <ol className="help-list help-list--ordered">
+                {t.snapshotGuideSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          </article>
+        </div>
+      </section>
       <section className="help-diagram help-diagram-card">
         <div className="form-header">
           <span className="eyebrow">{t.quickEyebrow}</span>
