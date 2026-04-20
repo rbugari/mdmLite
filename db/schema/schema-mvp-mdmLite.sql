@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS mdm_candidate (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_candidate_type CHECK (candidate_type IN ('mapping', 'group', 'parameter', 'unknown')),
     CONSTRAINT chk_candidate_status CHECK (status IN ('pending', 'promoted', 'rejected')),
-    CONSTRAINT chk_candidate_source CHECK (source_kind IN ('document', 'external', 'manual')),
+    CONSTRAINT chk_candidate_source CHECK (source_kind IN ('document', 'external', 'manual', 'legacy2lake', 'sql', 'notebook', 'orchestration')),
     CONSTRAINT chk_candidate_confidence CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))
 );
 

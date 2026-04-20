@@ -14,6 +14,8 @@ const envSchema = z.object({
   LLM_API_KEY: z.string().optional(),
   LLM_MODEL: z.string().default("gpt-4o-mini"),
   LLM_AZURE_ENDPOINT: z.string().optional(),
+  // Ingest API key (v0.5 external candidate input). Optional - batch endpoint disabled when absent.
+  INGEST_API_KEY: z.string().min(32).optional(),
 });
 
 const parsedEnv = envSchema.safeParse({
@@ -29,6 +31,7 @@ const parsedEnv = envSchema.safeParse({
   LLM_API_KEY: process.env.LLM_API_KEY,
   LLM_MODEL: process.env.LLM_MODEL,
   LLM_AZURE_ENDPOINT: process.env.LLM_AZURE_ENDPOINT,
+  INGEST_API_KEY: process.env.INGEST_API_KEY,
 });
 
 if (!parsedEnv.success) {
