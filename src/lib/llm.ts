@@ -36,7 +36,10 @@ Rules:
 - validFrom defaults to today if not stated.
 - Set needsHumanReview=true whenever you are uncertain about any field.
 - confidence should reflect how clearly the document states this rule.
-- Return ONLY a valid JSON array. No markdown, no explanation, no wrapper object.`;
+- Return your answer as a JSON object with a single key "candidates" containing the array.
+- Example: {"candidates": [...]}
+- Do NOT return a bare array. Always wrap in {"candidates": [...]}.`;
+
 
 export function isLlmConfigured(): boolean {
   return env.LLM_PROVIDER !== "none" && !!env.LLM_API_KEY;
@@ -54,7 +57,7 @@ async function callLlm(messages: ChatMessage[]): Promise<string> {
     messages,
     response_format: { type: "json_object" },
     temperature: 0.1,
-    max_tokens: 4096,
+    max_completion_tokens: 4096,
   };
 
   if (provider === "azure-openai") {
