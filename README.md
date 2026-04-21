@@ -1,17 +1,16 @@
-# MDM Lite v2
+# MDM Lite
 
-**Status:** ✅ Production Ready | **Version:** 2.0 | **Date:** 2026-04-15
+**Status:** ✅ Active Development | **Version:** 0.6 | **Date:** 2026-04-21
 
-Reference Data Manager (RDM) for centralized governance of business equivalences, groupings, and parameters with complete audit trail, approval workflow, and non-destructive change management.
+Reference Data Manager (RDM) for centralized governance of business equivalences, groupings, and parameters with complete audit trail, approval workflow, non-destructive change management, LLM-assisted candidate discovery, external batch ingest API, and integration exports (dbt seeds, OpenLineage).
 
 ## Current Technical Focus
-
-Feature work is currently paused while the project is hardened for a first installable release. The active foundation target is:
 
 - standard PostgreSQL without mandatory extensions
 - remote customer-owned database support
 - Windows-first installation path
-- web application delivery, not desktop rewrite
+- LLM-assisted rule candidate discovery (OpenAI-compatible)
+- integration exports for dbt, Purview, Marquez, and OpenMetadata
 
 ## 🎯 Quick Start
 
@@ -67,16 +66,18 @@ That batch file is the official first-run entrypoint for the current Windows tri
 
 This is the current supported packaging baseline for customer-hosted trials on Windows. It is intentionally simple: Node.js + guided `.env` bootstrap + PostgreSQL + standalone production launcher.
 
-## 📋 Project Status (v2)
+## 📋 Project Status
 
-| Phase | Component | Status |
-|-------|-----------|--------|
-| 1 | Authentication & Workflow | ✅ Complete |
-| 2 | Non-Destructive Updates & Audit | ✅ Complete |
-| 3 | Import Preview & List Operations | ✅ Complete |
-| 4 | Future Contract Documentation | ✅ Complete |
+| Version | Scope | Status |
+|---------|-------|--------|
+| v0.2 | Auth, approval workflow, audit trail, non-destructive updates, import preview | ✅ Closed |
+| v0.3 | Candidate review layer: store, list, promote, reject | ✅ Closed |
+| v0.3.1 | Export endpoints (CSV + snapshot), Databricks/Fabric/Snowflake platform guides | ✅ Closed |
+| v0.4 | LLM document discovery, extract API, candidates UI | ✅ Closed |
+| v0.5 | External batch ingest API (API key auth, up to 500 candidates/call) | ✅ Closed |
+| v0.6 | Dashboard stats (pending approvals + candidates), dbt seeds export, OpenLineage export | ✅ Closed |
 
-**Sign-off Date:** 2026-04-15 | **Test Suite:** GO | **Last Run:** 275.0s
+**Last commit:** `3d6ebdc` — 2026-04-21
 
 See [docs/prd-v2-operational-hardening.md](docs/prd-v2-operational-hardening.md) for detailed v2 specification and sign-off.
 
@@ -84,16 +85,13 @@ See [docs/prd-v2-operational-hardening.md](docs/prd-v2-operational-hardening.md)
 
 ```
 MDM_Lite/
-├── .github/workflows/
-│   └── test.yml                          # CI/CD pipeline
 ├── docs/
 │   ├── README.md                         # Documentation index
-│   ├── prd-v2-operational-hardening.md  # v2 specification & sign-off
-│   ├── product-definition.md            # Product requirements
-│   ├── current-state-and-contracts.md   # API contracts
-│   ├── future-roadmap.md                # v3+ roadmap
+│   ├── product-definition.md            # Product positioning and scope
+│   ├── current-state-and-contracts.md   # API surface + DB contracts
+│   ├── future-roadmap.md                # Roadmap and version history
 │   └── testing/
-│       └── README.md                    # Comprehensive testing guide
+│       └── README.md                    # Testing guide
 ├── data/
 │   └── demo/
 │       ├── client-asset-pack/           # Test datasets & scenarios
@@ -101,26 +99,34 @@ MDM_Lite/
 ├── db/
 │   ├── README.md
 │   └── schema/
-│       └── schema-mvp-mdmLite.sql       # PostgreSQL DDL
+│       ├── schema-mvp-mdmLite.sql       # PostgreSQL DDL (master)
+│       └── migrations/                  # Incremental migration scripts
 ├── src/
 │   ├── app/
 │   │   ├── api/
+│   │   │   ├── auth/                    # Login / logout / me
 │   │   │   ├── health/db/               # Server health endpoint
 │   │   │   ├── imports/                 # Import preview/confirm
 │   │   │   ├── workflow/                # State transitions
 │   │   │   ├── groups/                  # Entity APIs
 │   │   │   ├── mappings/
-│   │   │   └── parameters/
+│   │   │   ├── parameters/
+│   │   │   ├── candidates/              # Candidate review + extract + batch ingest
+│   │   │   └── export/                  # CSV, snapshot, dbt YAML, OpenLineage
+│   │   ├── candidates/                  # Candidates UI page
 │   │   ├── groups/                      # UI pages
 │   │   ├── imports/
 │   │   ├── mappings/
 │   │   ├── parameters/
 │   │   └── help/
-│   ├── components/                       # React components
+│   ├── components/                      # React components
 │   └── lib/
 │       ├── db.ts                        # PostgreSQL client
-│       ├── mdm.ts                       # Query layer
+│       ├── mdm.ts                       # Query layer + getDashboardStats
+│       ├── llm.ts                       # LLM client (OpenAI-compatible)
+│       ├── ingest-auth.ts               # Bearer API key validation
 │       ├── imports.ts                   # Import logic
+│       ├── env.ts                       # Env validation (Zod)
 │       ├── app-config.ts
 │       └── ...
 ├── scripts/
@@ -130,9 +136,6 @@ MDM_Lite/
 │   ├── apply-schema.mjs                 # DB setup
 │   ├── import-demo.mjs                  # Demo data loader
 │   └── run-next.mjs                     # Server launcher
-├── tests/
-│   ├── README.md                        # Test overview
-│   └── e2e/                             # E2E test reference
 ├── package.json
 ├── tsconfig.json
 ├── next.config.ts
@@ -157,20 +160,36 @@ MDM_Lite/
 - ✅ **Error reporting:** Row-level issues with actionable feedback
 - ✅ **Batch summary:** Insert/update/error counts upfront
 
+### Candidate Discovery (v0.4 + v0.5)
+- ✅ **LLM extraction:** Paste/upload text → LLM extracts mapping/group/parameter candidates
+- ✅ **Evidence + confidence:** Every candidate stores its evidence snippet and confidence score
+- ✅ **Manual review gate:** Candidates never auto-promote — human review always required
+- ✅ **Batch ingest API:** External pipelines can POST candidate packs via API key (`POST /api/candidates/batch`)
+- ✅ **Source tracking:** `sourceKind` tracks origin (document, legacy2lake, sql, notebook, orchestration, external, manual)
+
+### Integration Exports (v0.6)
+- ✅ **dbt seeds YAML:** `GET /api/export/dbt` — column types + descriptions + embedded CSV for `dbt seed`
+- ✅ **OpenLineage facets:** `GET /api/export/openlineage` — COMPLETE RunEvent consumable by Purview, Marquez, OpenMetadata
+- ✅ **CSV exports:** Individual entity downloads (`/api/export/mappings`, `/api/export/groups`, `/api/export/parameters`)
+- ✅ **Snapshot export:** `GET /api/export/snapshot` — full JSON envelope with all active views
+
 ### Operational UX
+- ✅ **Dashboard stats:** Active rules + pending approvals + pending candidates at a glance
 - ✅ **Pagination:** 5-100 rows per page, default 25
 - ✅ **Entity filters:** Domain, scope type, rule sets
 - ✅ **Direct history:** Click domain from table → filtered audit view
 - ✅ **Pending queue:** One-click approval/rejection/inactivation
 - ✅ **Search:** Find by code/name with partial match
+- ✅ **Bilingual UI:** English + Spanish
 
 ### Technical Contracts
 - ✅ **Active views:** Unchanged SQL contracts for downstream consumers
   - `vw_mdm_mapping_rule_active`
   - `vw_mdm_group_rule_active`
   - `vw_mdm_parameter_active`
-- ✅ **Change log:** Audit table for compliance (change_log.entity, actor, action, timestamp)
+- ✅ **Change log:** Audit table for compliance (entity, actor, action, timestamp)
 - ✅ **Authentication:** `APP_ADMIN_USERNAME` + `APP_ADMIN_PASSWORD` for admin runtime access
+- ✅ **Ingest key:** `INGEST_API_KEY` (Bearer token, min 32 chars) for external batch API
 
 ## 🧪 Testing Infrastructure
 
@@ -220,7 +239,7 @@ For detailed testing guide, see [docs/testing/README.md](docs/testing/README.md)
 
 ### Environment Setup
 
-Create `.env`:
+Create `.env` (or run `scripts\windows\configure-production.bat`):
 ```
 DATABASE_URL=postgresql://user:pass@localhost/mdm_lite
 DATABASE_SSL_MODE=disable
@@ -228,6 +247,15 @@ APP_ADMIN_USERNAME=admin
 APP_ADMIN_EMAIL=admin@example.com
 APP_ADMIN_PASSWORD=change-this-password
 APP_AUTH_SECRET=change-this-secret-now
+APP_PORT=3003
+
+# LLM (optional — enables document candidate extraction)
+LLM_PROVIDER=openai
+LLM_API_KEY=sk-proj-...
+LLM_MODEL=gpt-4o-mini
+
+# External batch ingest API key (optional — enables POST /api/candidates/batch)
+INGEST_API_KEY=change-to-a-random-string-min-32-chars
 ```
 
 `DATABASE_SSL_MODE` supports `disable`, `require`, and `no-verify`. Use `require` for managed PostgreSQL with valid certificates, `disable` for local trusted setups, and `no-verify` only for temporary compatibility tests.
@@ -273,44 +301,71 @@ CI/CD runs automatically on push (see `.github/workflows/test.yml`).
 
 ## 📊 API Reference
 
-### Health Check
+### Health
 ```bash
-GET /api/health/db
-# { ok: true, timestamp }
+GET /api/health/db                       # { ok, timestamp }
 ```
 
-### Import Preview
+### Auth
 ```bash
+POST /api/auth/login                     # { username, password } → session cookie
+POST /api/auth/logout
+GET  /api/auth/me
+```
+
+### Mappings / Groups / Parameters
+```bash
+GET/POST /api/mappings
+PUT      /api/mappings/[id]
+GET/POST /api/groups
+PUT      /api/groups/[id]
+GET/POST /api/parameters
+PUT      /api/parameters/[id]
+```
+
+### Approval Workflow
+```bash
+GET  /api/workflow/pending               # List pending_approval items
+POST /api/workflow/transition            # { entity, id, action, comments }
+```
+
+### Imports
+```bash
+POST /api/imports/demo
 POST /api/imports/upload/preview
-# Body: { target: "mappings|groups|parameters", file: File }
-# Response: { token, summary: { totalRows, validRows, errors, issues[] } }
-```
-
-### Import Confirm
-```bash
 POST /api/imports/upload/confirm
-# Body: { token }
-# Response: { imported, summary }
 ```
 
-### Workflow Transition
+### Candidates (v0.4 + v0.5)
 ```bash
-POST /api/workflow/transition
-# Body: { entity, id, action: "approve|reject|inactivate", comments }
-# Response: { status, record }
+POST /api/candidates/extract             # { text, documentName } → LLM → candidates
+GET  /api/candidates                     # ?status=pending|promoted|rejected|all&type=...
+GET  /api/candidates/[id]
+POST /api/candidates/[id]/promote        # { comments? } → creates DRAFT rule
+POST /api/candidates/[id]/reject         # { comments? }
+POST /api/candidates/batch               # Bearer <INGEST_API_KEY> — external batch ingest
 ```
 
-For complete API contracts, see [docs/current-state-and-contracts.md](docs/current-state-and-contracts.md)
+### Exports (v0.3.1 + v0.6)
+```bash
+GET /api/export/mappings                 # CSV download
+GET /api/export/groups                   # CSV download
+GET /api/export/parameters               # CSV download
+GET /api/export/snapshot                 # JSON envelope with all CSVs embedded
+GET /api/export/dbt                      # dbt seeds YAML (version: 2 + column types)
+GET /api/export/openlineage              # OpenLineage COMPLETE RunEvent JSON
+```
+
+For complete contracts see [docs/current-state-and-contracts.md](docs/current-state-and-contracts.md)
 
 ## 📚 Documentation
 
 | Document | Purpose |
 |----------|---------|
 | [docs/README.md](docs/README.md) | Documentation index |
-| [docs/prd-v2-operational-hardening.md](docs/prd-v2-operational-hardening.md) | v2 spec + sign-off |
-| [docs/product-definition.md](docs/product-definition.md) | Product requirements |
-| [docs/current-state-and-contracts.md](docs/current-state-and-contracts.md) | API/DB contracts |
-| [docs/future-roadmap.md](docs/future-roadmap.md) | v3+ roadmap |
+| [docs/product-definition.md](docs/product-definition.md) | Product positioning and scope |
+| [docs/current-state-and-contracts.md](docs/current-state-and-contracts.md) | Full API surface + DB contracts |
+| [docs/future-roadmap.md](docs/future-roadmap.md) | Version history + roadmap |
 | [docs/testing/README.md](docs/testing/README.md) | Testing guide |
 | [data/demo/client-asset-pack/README.md](data/demo/client-asset-pack/README.md) | Test scenarios |
 

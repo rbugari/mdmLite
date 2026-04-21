@@ -65,11 +65,11 @@ The core functional objects are:
 
 ### vs dbt and transformation tools
 
-MDM Lite stores business rules. dbt or pipelines apply them.
+MDM Lite stores business rules. dbt or pipelines apply them. MDM Lite can export a dbt seeds YAML so rules flow into the dbt project without duplication.
 
 ### vs Purview, Unity Catalog, and catalogs
 
-Catalog platforms describe and govern assets. MDM Lite manages operational rules that transformations must apply.
+Catalog platforms describe and govern assets. MDM Lite manages operational rules that transformations must apply. MDM Lite exports OpenLineage facets so catalogues can trace which datasets were built with MDM rules — without MDM Lite needing to know anything about the catalogue internals.
 
 ### vs enterprise MDM suites
 
@@ -91,24 +91,37 @@ Current contract direction:
 2. `vw_mdm_group_rule_active`
 3. `vw_mdm_parameter_active`
 
+For dbt projects: `GET /api/export/dbt` downloads a seeds YAML ready for `dbt seed`.
+For data catalogues: `GET /api/export/openlineage` emits a COMPLETE RunEvent compatible with Purview, Marquez, and OpenMetadata.
+
 ## Current Product Boundary
 
-MDM Lite currently focuses on project-level operational rules. It does not attempt to infer rules from heterogeneous technical solutions by itself.
+MDM Lite manages operational rules. It does not attempt to replace catalogues or analyzers.
 
-If richer inputs are required in the future:
+Current candidate entry modes:
 
-1. documentation-based candidate extraction can be added inside MDM Lite
-2. deeper rule extraction from code and technical assets should come from a stronger upstream analyzer such as Legacy2Lake
+1. manual create/edit via UI
+2. csv/xlsx import
+3. document paste → LLM extraction → human review → promote
+4. external batch ingest via API key (from pipelines, Legacy2Lake, or any analyzer)
+
+All promotion is manual. MDM Lite never autonomously publishes to final rule tables.
 
 ## Future Direction
 
-The future direction of MDM Lite is not to become a universal analyzer. Its role is to remain the governed destination for reusable rule candidates when that capability is available.
+The future direction of MDM Lite is to remain the governed destination for reusable rule candidates — not to become a universal analyzer.
 
-That means MDM Lite may later accept candidate packs coming from:
+MDM Lite accepts candidates from:
 
 1. manual entry
 2. csv/xlsx import
-3. documentation discovery
-4. external analyzers such as Legacy2Lake
+3. document discovery (LLM-assisted, already implemented)
+4. external analyzers such as Legacy2Lake (batch API, already implemented)
 
-But approval, review, and promotion remain inside MDM Lite.
+Review, approval, and promotion remain inside MDM Lite.
+
+Next capabilities in priority order:
+1. bulk promote/reject UI for candidate batches
+2. auto-promote threshold for high-confidence candidates from trusted sources
+3. duplicate detection on ingest
+4. MCP server for AI assistant integration

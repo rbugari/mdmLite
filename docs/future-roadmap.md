@@ -73,97 +73,58 @@ This principle should be preserved in all future consumption features.
 
 ## v0.3.1 - Platform Consumption Connectors
 
-### Status: next
+### Status: closed
 
-### Objective
+### Scope delivered
 
-Enable native and performant consumption from modern data platforms without requiring row-by-row API calls.
-
-### Scope
-
-1. snapshot export endpoint: `GET /api/export/snapshot` returning a ZIP with one CSV per active view
-2. individual view exports: `GET /api/export/mappings.csv`, `GET /api/export/groups.csv`, `GET /api/export/parameters.csv`
-3. authentication required on all export endpoints (same session or token)
+1. snapshot export endpoint: `GET /api/export/snapshot` returning JSON with embedded CSVs
+2. individual view exports: `GET /api/export/mappings`, `/api/export/groups`, `/api/export/parameters`
+3. authentication required on all export endpoints
 4. platform connection guides in Help for Databricks (Lakebase + JDBC) and Fabric (Azure PostgreSQL + Dataflow Gen2)
 
-### What this solves
+## v0.4 - Document Discovery
 
-Databricks and Fabric can consume rules natively via SQL without any export step. The snapshot export solves the Snowflake case and any other platform that cannot directly query PostgreSQL.
+### Status: closed
 
-### Acceptance criteria
+### Scope delivered
 
-1. a pipeline can download the full active rules in a single HTTP call
-2. the output format is flat CSV, one file per entity type
-3. the call is authenticated and logs the export in audit
-4. Databricks and Fabric integration guides are live in Help with concrete steps
-
-### What this does not include
-
-1. push connectors or CDC
-2. scheduled export jobs inside the product
-3. Snowflake-native connector (the client handles stage loading from the downloaded file)
-
-## v0.4 - Documentation Discovery
-
-### Scope
-
-Introduce a small but useful discovery mode from documentation only.
-
-Inputs:
-
-1. markdown
-2. text documents
-3. pasted business notes
-4. simple operational documentation
-
-Supported candidate types:
-
-1. mapping
-2. group
-3. parameter
-4. unknown
-
-### Execution model
-
-1. user uploads or pastes text
-2. system chunks the content
-3. LLM extracts candidate JSON against a strict schema
-4. backend validates schema
-5. candidates are stored with evidence
-6. user reviews and promotes manually
-
-### Acceptance criteria
-
-1. the system never publishes directly from document extraction to final rule tables
-2. every candidate includes evidence snippet
-3. every candidate includes confidence and review requirement
-4. all promotion remains manual
+1. `src/lib/llm.ts` — OpenAI-compatible LLM client, `max_completion_tokens`, JSON object response format
+2. `POST /api/candidates/extract` — text + documentName → LLM → stored candidates
+3. `GET /api/candidates` — filterable list (status, type)
+4. `GET /api/candidates/[id]` — single candidate detail
+5. `POST /api/candidates/[id]/promote` — resolve entity type + rule set from payload → create DRAFT → status='promoted'
+6. `POST /api/candidates/[id]/reject` — status='rejected'
+7. `/candidates` UI page with two tabs: candidate list (filter + promote/reject) and extract-from-document form
+8. `mdm_candidate` table + constraint fix in `mdm_change_log`
 
 ## v0.5 - External Candidate Input
 
-### Scope
+### Status: closed
 
-Allow MDM Lite to accept candidate packs coming from stronger upstream analyzers.
+### Scope delivered
 
-Example source kinds:
+1. `INGEST_API_KEY` env variable (min 32 chars)
+2. `src/lib/ingest-auth.ts` — Bearer token validation + `X-Source-System` header
+3. `POST /api/candidates/batch` — up to 500 candidates/call, row-level error handling, audit log
+4. Expanded `source_kind` constraint: `legacy2lake`, `sql`, `notebook`, `orchestration`
 
-1. documentation
-2. legacy2lake
-3. sql
-4. notebook
-5. orchestration
+## v0.6 - Integration Exports + Dashboard
 
-### Acceptance criteria
+### Status: closed
 
-1. the candidate contract is source-agnostic
-2. MDM Lite can review external candidate packs without knowing how they were generated internally
-3. promotion rules remain unchanged
+### Scope delivered
+
+1. `getDashboardStats()` extended with `pendingApprovals` + `pendingCandidates`
+2. Home page stat strip shows 5 values (mappings, groups, parameters, pending approvals, pending candidates)
+3. `GET /api/export/dbt` — dbt seeds YAML (`version: 2` + column types + embedded CSV)
+4. `GET /api/export/openlineage` — OpenLineage 1-0-5 COMPLETE RunEvent with mdmRules custom facet
+5. Integration guides in Help/Platforms for dbt seeds and OpenLineage (EN + ES)
 
 ## Cross-Cutting Requirements
 
 ### Candidate contract
 
-Any future candidate input should minimally support:
+Any candidate input must include:
 
 1. `candidateType`
 2. `payload`
@@ -181,23 +142,38 @@ Any future candidate input should minimally support:
 
 ### Technical contract preservation
 
-Regardless of future smarter inputs, downstream technical consumers should keep reading from stable approved active views.
+Regardless of future inputs, downstream technical consumers keep reading from stable approved active views.
+
+## Candidate Roadmap (v0.7+)
+
+The following items are identified as next in value order:
+
+### High value — candidate UX
+1. **Bulk promote/reject** — checkbox multi-select + "Promote selected" / "Reject selected" in candidates UI
+2. **Auto-promote threshold** — `INGEST_MIN_CONFIDENCE_AUTOPROMOTE` env var; candidates above threshold with `needsHumanReview=false` promote automatically on ingest
+3. **Duplicate detection on ingest** — check if `(candidate_type, payload)` already exists with `status='pending'` before inserting
+
+### Medium value — pipeline feedback
+4. **Batch status endpoint** — `GET /api/candidates/batch/:batchId` — total/pending/promoted/rejected counts
+5. **Promote conflict detection** — before creating draft, check if active rule with same key fields already exists; return 409 with warning
+
+### Strategic value
+6. **MCP server** — `.env` has `MCP_ENABLED=0`, `MCP_PORT=3103` reserved; exposes MDM rules to AI assistants via Model Context Protocol
 
 ## Not Planned For Near Term
 
 1. full codebase analysis inside MDM Lite
-2. replacing Purview or Unity Catalog
-3. autonomous LLM write actions
+2. replacing Purview, Unity Catalog, Collibra, or dbt
+3. autonomous LLM write actions (all promotion is and will remain manual)
 4. multi-company enterprise scope
-5. enterprise-grade full MDM workflows
+5. enterprise-grade full MDM workflows (golden record, survivorship, stewardship domains)
 
-## Strategic Link With Legacy2Lake
-
-Future integration should be shaped like this:
+## Strategic Link With Legacy2Lake And External Analyzers
 
 1. Legacy2Lake or another analyzer extracts structured candidates
-2. MDM Lite receives candidate packs
+2. MDM Lite receives candidate packs via `POST /api/candidates/batch`
 3. MDM Lite handles review, governance, approval, and promotion
+4. MDM Lite publishes promoted rules as dbt seeds or OpenLineage facets for downstream consumption
 4. downstream consumers keep reading stable active contracts
 
 This preserves clean boundaries between analysis and governance.
