@@ -16,8 +16,15 @@ const reportPath = path.join(reportsDir, "e2e-ui-workflows-latest.json");
 const artifactDir = path.join(reportsDir, "e2e-ui-workflows-artifacts");
 
 function loadEnv(pathToEnv) {
+  const env = {
+    ...process.env,
+  };
+
+  if (!fs.existsSync(pathToEnv)) {
+    return env;
+  }
+
   const txt = fs.readFileSync(pathToEnv, "utf8");
-  const env = {};
 
   for (const line of txt.split(/\r?\n/)) {
     const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);

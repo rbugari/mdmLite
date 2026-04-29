@@ -4,8 +4,15 @@ import path from "node:path";
 import { Client } from "pg";
 
 function loadEnv(pathToEnv) {
+  const env = {
+    ...process.env,
+  };
+
+  if (!fs.existsSync(pathToEnv)) {
+    return env;
+  }
+
   const txt = fs.readFileSync(pathToEnv, "utf8");
-  const env = {};
 
   for (const line of txt.split(/\r?\n/)) {
     const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
@@ -484,9 +491,10 @@ async function runImportSuite(baseUrl, cookie) {
 
 const env = loadEnv(".env");
 const baseUrl = env.APP_BASE_URL || `http://127.0.0.1:${env.APP_PORT || "3003"}`;
+const adminIdentifier = env.APP_ADMIN_USERNAME || env.APP_ADMIN_EMAIL;
 
-if (!env.APP_ADMIN_EMAIL || !env.APP_ADMIN_PASSWORD || !env.DATABASE_URL) {
-  throw new Error("APP_ADMIN_EMAIL, APP_ADMIN_PASSWORD and DATABASE_URL are required in .env");
+if (!adminIdentifier || !env.APP_ADMIN_PASSWORD || !env.DATABASE_URL) {
+  throw new Error("APP_ADMIN_USERNAME or APP_ADMIN_EMAIL, APP_ADMIN_PASSWORD and DATABASE_URL are required in env");
 }
 
 const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
@@ -499,7 +507,7 @@ try {
   const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email: env.APP_ADMIN_EMAIL, password: env.APP_ADMIN_PASSWORD }),
+    body: JSON.stringify({ identifier: adminIdentifier, password: env.APP_ADMIN_PASSWORD }),
   });
   await ensureOk(loginResponse, "login");
 

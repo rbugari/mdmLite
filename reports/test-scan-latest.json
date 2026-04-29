@@ -1,36 +1,36 @@
 {
-  "generatedAt": "2026-04-17T14:20:10.543Z",
+  "generatedAt": "2026-04-29T12:17:16.791Z",
   "overall": "GO",
   "baseUrl": "http://127.0.0.1:3003",
   "server": {
     "ok": true,
     "error": null
   },
-  "totalDurationMs": 70168,
+  "totalDurationMs": 270335,
   "steps": [
     {
       "script": "typecheck",
       "code": 0,
       "ok": true,
-      "durationMs": 5131
+      "durationMs": 11936
     },
     {
       "script": "e2e:nondestructive",
       "code": 0,
       "ok": true,
-      "durationMs": 4284
+      "durationMs": 28530
     },
     {
       "script": "e2e:client-asset",
       "code": 0,
       "ok": true,
-      "durationMs": 13711
+      "durationMs": 25114
     },
     {
       "script": "e2e:ui-workflows",
       "code": 0,
       "ok": true,
-      "durationMs": 46835
+      "durationMs": 203523
     }
   ]
 }

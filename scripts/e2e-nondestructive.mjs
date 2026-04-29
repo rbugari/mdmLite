@@ -1,8 +1,15 @@
 import fs from "node:fs";
 
 function loadEnv(path) {
+  const env = {
+    ...process.env,
+  };
+
+  if (!fs.existsSync(path)) {
+    return env;
+  }
+
   const txt = fs.readFileSync(path, "utf8");
-  const env = {};
 
   for (const line of txt.split(/\r?\n/)) {
     const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
@@ -123,9 +130,10 @@ function assertActiveViewState(items, oldId, newId, entityName) {
 const env = loadEnv(".env");
 const appPort = env.APP_PORT || "3003";
 const baseUrl = env.APP_BASE_URL || `http://127.0.0.1:${appPort}`;
+const adminIdentifier = env.APP_ADMIN_USERNAME || env.APP_ADMIN_EMAIL;
 
-if (!env.APP_ADMIN_EMAIL || !env.APP_ADMIN_PASSWORD) {
-  throw new Error("APP_ADMIN_EMAIL and APP_ADMIN_PASSWORD are required in .env");
+if (!adminIdentifier || !env.APP_ADMIN_PASSWORD) {
+  throw new Error("APP_ADMIN_USERNAME or APP_ADMIN_EMAIL, and APP_ADMIN_PASSWORD, are required in env.");
 }
 
 const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
@@ -141,7 +149,7 @@ const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({
-    email: env.APP_ADMIN_EMAIL,
+    identifier: adminIdentifier,
     password: env.APP_ADMIN_PASSWORD,
   }),
 });

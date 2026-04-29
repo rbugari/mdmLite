@@ -22,8 +22,15 @@ const scriptCommands = {
 };
 
 function loadEnv(pathToEnv) {
+  const env = {
+    ...process.env,
+  };
+
+  if (!fs.existsSync(pathToEnv)) {
+    return env;
+  }
+
   const txt = fs.readFileSync(pathToEnv, "utf8");
-  const env = {};
 
   for (const line of txt.split(/\r?\n/)) {
     const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
