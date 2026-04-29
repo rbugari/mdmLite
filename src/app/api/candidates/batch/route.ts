@@ -295,6 +295,7 @@ export async function POST(request: Request) {
         duplicates: duplicates.length,
         rejected: rejected.length,
         batchId,
+        ...(autoPromoteDeferred.length > 0 && { autoPromoteDeferred }),
       }),
       `External batch from ${auth.sourceSystem}: ${accepted.length} accepted, ${autoPromoted.length} auto-promoted, ${duplicates.length} duplicates, ${rejected.length} rejected`,
     ],

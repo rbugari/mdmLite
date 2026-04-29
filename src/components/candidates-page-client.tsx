@@ -63,6 +63,81 @@ type BatchHistoryResponse = {
   items?: BatchHistoryItem[];
 };
 
+type BatchConflictItem = {
+  candidateId: string;
+  candidateType: string;
+  conflictRecordId: string;
+  summary: string;
+};
+
+type AutoPromoteDeferredItem = {
+  index: number;
+  candidateId: string;
+  reason: string;
+};
+
+type BatchDetailResponse = {
+  ok: boolean;
+  error?: string;
+  batchId?: string;
+  sourceKind?: string | null;
+  sourceName?: string | null;
+  sourceSystem?: string | null;
+  accepted?: number;
+  autoPromoted?: number;
+  duplicates?: number;
+  rejectedOnIngest?: number;
+  counts?: {
+    pending: number;
+    promoted: number;
+    rejected: number;
+  };
+  totalStored?: number;
+  createdAt?: string | null;
+  lastAuditAt?: string | null;
+  auditComment?: string | null;
+  analytics?: {
+    reviewCompletionRate: number;
+    manualPromoted: number;
+    reviewThroughputPerHour: number;
+    typeCounts: {
+      mapping: number;
+      group: number;
+      parameter: number;
+      unknown: number;
+    };
+    confidence: {
+      average: number | null;
+      min: number | null;
+      max: number | null;
+    };
+    conflictCount: number;
+    conflictItems: BatchConflictItem[];
+    autoPromoteDeferredCount: number;
+    autoPromoteDeferred: AutoPromoteDeferredItem[];
+  };
+};
+
+type BatchExportResponse = {
+  ok: boolean;
+  error?: string;
+  batchId?: string;
+  exportedAt?: string;
+  exportedBy?: string;
+  counts?: {
+    mappings: number;
+    groups: number;
+    parameters: number;
+    candidates: {
+      total: number;
+      pending: number;
+      promoted: number;
+      rejected: number;
+    };
+  };
+  files?: Record<string, string>;
+};
+
 type BulkActionResult = {
   action: "promote" | "reject";
   requested: number;
@@ -139,6 +214,11 @@ export function CandidatesPageClient() {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historySourceKind, setHistorySourceKind] = useState("");
   const [historyReviewState, setHistoryReviewState] = useState("all");
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [batchDetail, setBatchDetail] = useState<BatchDetailResponse | null>(null);
+  const [batchDetailLoading, setBatchDetailLoading] = useState(false);
+  const [batchDetailError, setBatchDetailError] = useState<string | null>(null);
+  const [exportingBatchId, setExportingBatchId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [llmConfigured, setLlmConfigured] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -202,6 +282,54 @@ export function CandidatesPageClient() {
     }
   }
 
+  async function loadBatchDetail(batchId: string) {
+    setBatchDetailLoading(true);
+    setBatchDetailError(null);
+
+    try {
+      const res = await fetch(`/api/candidates/batch/${batchId}`, { cache: "no-store" });
+      const data = (await res.json()) as BatchDetailResponse;
+
+      if (!data.ok) {
+        setBatchDetailError(data.error ?? "Cannot load batch detail.");
+        return;
+      }
+
+      setBatchDetail(data);
+    } catch (e) {
+      setBatchDetailError(e instanceof Error ? e.message : "Unknown error.");
+    } finally {
+      setBatchDetailLoading(false);
+    }
+  }
+
+  async function handleExportBatch(batchId: string) {
+    setExportingBatchId(batchId);
+    setHistoryError(null);
+
+    try {
+      const res = await fetch(`/api/export/batch/${batchId}`, { cache: "no-store" });
+      const data = (await res.json()) as BatchExportResponse;
+
+      if (!data.ok) {
+        setHistoryError(data.error ?? "Cannot export batch.");
+        return;
+      }
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `mdm-batch-${batchId.slice(0, 8)}-export.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setHistoryError(e instanceof Error ? e.message : "Unknown error.");
+    } finally {
+      setExportingBatchId(null);
+    }
+  }
+
   useEffect(() => {
     void loadCandidates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,6 +341,13 @@ export function CandidatesPageClient() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, historySourceKind, historyReviewState]);
+
+  useEffect(() => {
+    if (tab === "history" && selectedBatchId) {
+      void loadBatchDetail(selectedBatchId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, selectedBatchId]);
 
   async function handlePromote(id: string) {
     setProcessingId(id);
@@ -510,23 +645,148 @@ export function CandidatesPageClient() {
                         </div>
                       </td>
                       <td>
-                        <button
-                          type="button"
-                          className="btn btn--primary btn--sm"
-                          onClick={() => {
-                            setBatchFilter(batch.batchId);
-                            setStatusFilter(batch.reviewState === "completed" ? "all" : "pending");
-                            setTab("list");
-                          }}
-                        >
-                          Open batch
-                        </button>
+                        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => setSelectedBatchId(batch.batchId)}
+                          >
+                            View details
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--secondary btn--sm"
+                            disabled={exportingBatchId === batch.batchId}
+                            onClick={() => void handleExportBatch(batch.batchId)}
+                          >
+                            {exportingBatchId === batch.batchId ? "Exporting…" : "Export batch"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--primary btn--sm"
+                            onClick={() => {
+                              setBatchFilter(batch.batchId);
+                              setStatusFilter(batch.reviewState === "completed" ? "all" : "pending");
+                              setTab("list");
+                            }}
+                          >
+                            Open batch
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          )}
+
+          {selectedBatchId && (
+            <section className="table-panel table-panel--padded" style={{ marginTop: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+                <div>
+                  <span className="eyebrow">Batch analytics</span>
+                  <h2 style={{ margin: "0.25rem 0 0" }}>{selectedBatchId}</h2>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--secondary btn--sm"
+                  onClick={() => {
+                    setSelectedBatchId(null);
+                    setBatchDetail(null);
+                    setBatchDetailError(null);
+                  }}
+                >
+                  Close details
+                </button>
+              </div>
+
+              {batchDetailError && <div className="status-banner status-banner--error">{batchDetailError}</div>}
+
+              {batchDetailLoading || !batchDetail ? (
+                <p className="muted-text">Loading batch analytics…</p>
+              ) : (
+                <div style={{ display: "grid", gap: "1rem", marginTop: "1rem" }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                      gap: "0.75rem",
+                    }}
+                  >
+                    <div className="table-panel table-panel--padded">
+                      <strong>{batchDetail.analytics?.reviewCompletionRate ?? 0}%</strong>
+                      <div className="muted-text">review completion</div>
+                    </div>
+                    <div className="table-panel table-panel--padded">
+                      <strong>{batchDetail.analytics?.reviewThroughputPerHour ?? 0}/h</strong>
+                      <div className="muted-text">review throughput</div>
+                    </div>
+                    <div className="table-panel table-panel--padded">
+                      <strong>{batchDetail.analytics?.manualPromoted ?? 0}</strong>
+                      <div className="muted-text">manual promotes</div>
+                    </div>
+                    <div className="table-panel table-panel--padded">
+                      <strong>{batchDetail.analytics?.conflictCount ?? 0}</strong>
+                      <div className="muted-text">pending conflicts</div>
+                    </div>
+                  </div>
+
+                  <div className="table-panel table-panel--padded">
+                    <strong>Type mix</strong>
+                    <div className="muted-text" style={{ marginTop: "0.35rem" }}>
+                      Mapping {batchDetail.analytics?.typeCounts.mapping ?? 0} · Group {batchDetail.analytics?.typeCounts.group ?? 0} · Parameter {batchDetail.analytics?.typeCounts.parameter ?? 0} · Unknown {batchDetail.analytics?.typeCounts.unknown ?? 0}
+                    </div>
+                    <div className="muted-text" style={{ marginTop: "0.35rem" }}>
+                      Confidence avg {batchDetail.analytics?.confidence.average ?? "—"} · min {batchDetail.analytics?.confidence.min ?? "—"} · max {batchDetail.analytics?.confidence.max ?? "—"}
+                    </div>
+                    <div className="muted-text" style={{ marginTop: "0.35rem" }}>
+                      Ingest: accepted {batchDetail.accepted ?? 0} · auto {batchDetail.autoPromoted ?? 0} · duplicates {batchDetail.duplicates ?? 0} · rejected {batchDetail.rejectedOnIngest ?? 0}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                      gap: "1rem",
+                    }}
+                  >
+                    <div className="table-panel table-panel--padded">
+                      <strong>Conflict samples</strong>
+                      {batchDetail.analytics?.conflictItems.length ? (
+                        <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.75rem" }}>
+                          {batchDetail.analytics.conflictItems.map((item) => (
+                            <div key={item.candidateId} style={{ fontSize: "0.85rem" }}>
+                              <strong>{item.candidateType}</strong> · {item.summary}
+                              <div className="muted-text">Active record {item.conflictRecordId.slice(0, 8)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="muted-text" style={{ marginTop: "0.75rem" }}>No active conflicts detected for pending candidates.</p>
+                      )}
+                    </div>
+
+                    <div className="table-panel table-panel--padded">
+                      <strong>Deferred auto-promote</strong>
+                      {batchDetail.analytics?.autoPromoteDeferred.length ? (
+                        <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.75rem" }}>
+                          {batchDetail.analytics.autoPromoteDeferred.map((item) => (
+                            <div key={`${item.candidateId}-${item.index}`} style={{ fontSize: "0.85rem" }}>
+                              <strong>#{item.index + 1}</strong> · {item.reason}
+                              <div className="muted-text">Candidate {item.candidateId.slice(0, 8)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="muted-text" style={{ marginTop: "0.75rem" }}>No deferred auto-promote reasons recorded for this batch.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
           )}
         </section>
       )}

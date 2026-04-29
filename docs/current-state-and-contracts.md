@@ -6,7 +6,7 @@ Describe the real current state of MDM Lite, aligned with what is implemented to
 
 ## Real Current State
 
-MDM Lite is at **v0.9** with a complete operational product that provides:
+MDM Lite is at **v1.0** with a complete operational product that provides:
 
 1. authenticated admin access for all operational pages
 2. manual create and edit flows for mappings, groups, and parameters
@@ -23,12 +23,13 @@ MDM Lite is at **v0.9** with a complete operational product that provides:
 13. shared candidate promotion logic with validFrom normalization (v0.8)
 14. optional threshold-based auto-promote for trusted batch candidates (v0.8)
 15. batch history API and review progress UI for candidate operations (v0.9)
-16. integration exports: dbt seeds YAML, OpenLineage RunEvent, CSV, snapshot (v0.3.1 + v0.6)
-17. conflict-safe candidate promotion against active rules (v0.7)
-18. dashboard stats: active rules + pending approvals + pending candidates (v0.6)
-19. contextual Help for administration, positioning, platform consumption, and integration guides
-20. bilingual UI (English + Spanish)
-21. DB health endpoint
+16. batch export and analytics detail for candidate operations (v1.0)
+17. integration exports: dbt seeds YAML, OpenLineage RunEvent, CSV, snapshot (v0.3.1 + v0.6)
+18. conflict-safe candidate promotion against active rules (v0.7)
+19. dashboard stats: active rules + pending approvals + pending candidates (v0.6)
+20. contextual Help for administration, positioning, platform consumption, and integration guides
+21. bilingual UI (English + Spanish)
+22. DB health endpoint
 
 ## What Is Implemented Today
 
@@ -47,7 +48,7 @@ MDM Lite is at **v0.9** with a complete operational product that provides:
 11. help/platforms (includes dbt + OpenLineage integration guides)
 12. help/executive
 13. imports
-14. candidates (list + batch filter + bulk actions + extract from document + batch history tabs)
+14. candidates (list + batch filter + bulk actions + extract from document + batch history + analytics detail)
 
 ### API surface
 
@@ -86,7 +87,7 @@ MDM Lite is at **v0.9** with a complete operational product that provides:
 20. `POST /api/candidates/[id]/promote` — `{ comments? }` → creates DRAFT in target table → status='promoted' or returns `409` if equivalent active rule exists
 21. `POST /api/candidates/[id]/reject` — `{ comments? }` → status='rejected'
 22. `POST /api/candidates/batch` — Bearer `<INGEST_API_KEY>` + optional `X-Source-System` header. Body: `{ sourceKind, sourceName, candidates[] }`. Up to 500/call. Row-level error handling + deduplication + optional auto-promote.
-23. `GET /api/candidates/batch/[batchId]` — admin session or ingest Bearer key. Returns accepted/autoPromoted/duplicate/rejected ingest counts and pending/promoted/rejected review counts.
+23. `GET /api/candidates/batch/[batchId]` — admin session or ingest Bearer key. Returns accepted/autoPromoted/duplicate/rejected ingest counts, pending/promoted/rejected review counts, and analytics detail (type mix, confidence, throughput, conflicts, deferred auto-promote reasons).
 24. `GET /api/candidates/batch` — admin-only batch history with `sourceKind`, `reviewState`, and `limit` filters.
 
 #### Exports (v0.3.1 + v0.6)
@@ -96,6 +97,7 @@ MDM Lite is at **v0.9** with a complete operational product that provides:
 28. `GET /api/export/snapshot` — JSON envelope with all 3 CSVs embedded + counts
 29. `GET /api/export/dbt` — dbt seeds YAML (`version: 2` + column types + descriptions + embedded CSV blocks)
 30. `GET /api/export/openlineage` — OpenLineage spec 1-0-5 COMPLETE RunEvent with mdmRules custom facet and SchemaDatasetFacets
+31. `GET /api/export/batch/[batchId]` — admin-only JSON export envelope for one batch with promoted draft records embedded as CSV files
 
 ### Database foundation
 
@@ -206,10 +208,10 @@ These define the next roadmap, not the validity of the current product.
 
 ### Product gaps
 
-1. no export of promoted rules scoped to a batch
-2. no per-source trusted threshold policy (only one global env threshold)
-3. no explicit auto-promote reporting view in UI
-4. no batch detail analytics screen beyond the history summary
+1. no per-source trusted threshold policy (only one global env threshold)
+2. no explicit auto-promote reporting view in UI
+3. no comparison between ingest outcome and later approved/activated outcome
+4. no deep candidate replay or re-run tooling by batch
 
 ### Platform gaps
 
@@ -220,7 +222,7 @@ These define the next roadmap, not the validity of the current product.
 
 ## Functional Contract For Current Product
 
-For the current product (v0.9), MDM Lite should be treated as:
+For the current product (v1.0), MDM Lite should be treated as:
 
 1. admin-managed rule administration through UI
 2. governed approval workflow with audit trail

@@ -153,6 +153,16 @@ This principle should be preserved in all future consumption features.
 2. batch history supports `sourceKind`, `reviewState`, and `limit` filters
 3. candidates UI includes a `Batch history` tab with `Open batch` drill-in to the filtered review list
 
+## v1.0 - Batch Export And Analytics
+
+### Status: closed
+
+### Scope delivered
+
+1. `GET /api/export/batch/[batchId]` exports promoted draft records from a single batch as a JSON envelope with embedded CSV files
+2. `GET /api/candidates/batch/[batchId]` includes throughput, type mix, confidence stats, conflict samples, and deferred auto-promote reasons
+3. candidates UI supports `View details` and `Export batch` actions from the batch history tab
+
 ## Cross-Cutting Requirements
 
 ### Candidate contract
@@ -177,13 +187,13 @@ Any candidate input must include:
 
 Regardless of future inputs, downstream technical consumers keep reading from stable approved active views.
 
-## Candidate Roadmap (v1.0+)
+## Candidate Roadmap (v1.1+)
 
 The following items are identified as next in value order:
 
 ### High value — candidate operations
-1. **Export promoted-by-batch** — export the draft/promoted records generated from one batch
-2. **Batch detail analytics** — show conflicts, deferred auto-promote reasons, and throughput per batch in UI
+1. **Approved-vs-ingested traceability** — show how many promoted records later became approved/active per batch
+2. **Batch replay controls** — requeue or clone unresolved candidates from one batch into a new review run
 
 ### Medium value — operational feedback
 3. **Auto-promote audit view** — filter candidate/audit screens by auto-promoted vs manually promoted

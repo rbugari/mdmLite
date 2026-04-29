@@ -1,6 +1,6 @@
 # MDM Lite
 
-**Status:** ✅ Active Development | **Version:** 0.9 | **Date:** 2026-04-29
+**Status:** ✅ Active Development | **Version:** 1.0 | **Date:** 2026-04-29
 
 Reference Data Manager (RDM) for centralized governance of business equivalences, groupings, and parameters with complete audit trail, approval workflow, non-destructive change management, LLM-assisted candidate discovery, external batch ingest API, bulk candidate review, conflict-safe promotion, optional auto-promote for trusted batches, and integration exports (dbt seeds, OpenLineage).
 
@@ -79,8 +79,9 @@ This is the current supported packaging baseline for customer-hosted trials on W
 | v0.7 | Candidate review hardening: batch status, dedupe, batch filter, bulk actions, conflict detection | ✅ Closed |
 | v0.8 | Candidate automation: validFrom normalization + threshold-based auto-promote | ✅ Closed |
 | v0.9 | Candidate operations: batch history API and review progress UI | ✅ Closed |
+| v1.0 | Candidate operations: batch export and analytics detail | ✅ Closed |
 
-**Latest closed milestone:** v0.9 candidate operations
+**Latest closed milestone:** v1.0 candidate operations
 
 See [docs/prd-v2-operational-hardening.md](docs/prd-v2-operational-hardening.md) for detailed v2 specification and sign-off.
 
@@ -187,6 +188,11 @@ MDM_Lite/
 - ✅ **Batch history API:** `GET /api/candidates/batch` returns recent batches with source, ingest results, and review progress
 - ✅ **History filters:** `sourceKind`, `reviewState`, and `limit` support targeted operational review
 - ✅ **History UI:** a dedicated `Batch history` tab lets admins drill directly into a chosen batch
+
+### Candidate Operations (v1.0)
+- ✅ **Batch export:** `GET /api/export/batch/[batchId]` returns promoted draft records from one batch as a JSON envelope with embedded CSV files
+- ✅ **Batch analytics detail:** `GET /api/candidates/batch/[batchId]` now includes type mix, confidence stats, throughput, conflict samples, and deferred auto-promote reasons
+- ✅ **History detail panel:** the `Batch history` tab can open analytics detail and download the batch export directly from the UI
 
 ### Integration Exports (v0.6)
 - ✅ **dbt seeds YAML:** `GET /api/export/dbt` — column types + descriptions + embedded CSV for `dbt seed`
