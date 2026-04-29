@@ -11,6 +11,16 @@ const bodySchema = z.object({
   comments: z.string().max(1000).optional(),
 });
 
+class PromotionConflictError extends Error {
+  conflictRecordId: string;
+
+  constructor(message: string, conflictRecordId: string) {
+    super(message);
+    this.name = "PromotionConflictError";
+    this.conflictRecordId = conflictRecordId;
+  }
+}
+
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const identity = await getAdminIdentity();
   if (!identity) return unauthorizedResponse();
@@ -63,6 +73,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       );
     }
   } catch (err) {
+    if (err instanceof PromotionConflictError) {
+      return NextResponse.json(
+        { ok: false, error: err.message, conflictRecordId: err.conflictRecordId },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : "Promote failed." },
       { status: 422 },
@@ -140,7 +157,79 @@ async function resolveRuleSetAndEntityType(
   return { ruleSetId, entityTypeId };
 }
 
+async function assertNoActiveMappingConflict(payload: Record<string, unknown>) {
+  const result = await query<{ id: string }>(
+    `select id::text
+     from vw_mdm_mapping_rule_active
+     where rule_set_code = $1
+       and entity_type_code = $2
+       and source_key = $3
+       and source_value = $4
+       and target_value = $5
+     limit 1`,
+    [
+      typeof payload.ruleSetCode === "string" && payload.ruleSetCode ? payload.ruleSetCode : "ventas_perseida_clientes",
+      typeof payload.entityTypeCode === "string" && payload.entityTypeCode ? payload.entityTypeCode : "CLIENT",
+      typeof payload.sourceKey === "string" ? payload.sourceKey : "extracted",
+      typeof payload.sourceValue === "string" ? payload.sourceValue : "",
+      typeof payload.targetValue === "string" ? payload.targetValue : "",
+    ],
+  );
+
+  if (result.rows[0]?.id) {
+    throw new PromotionConflictError("An active mapping rule with the same source and target already exists.", result.rows[0].id);
+  }
+}
+
+async function assertNoActiveGroupConflict(payload: Record<string, unknown>) {
+  const result = await query<{ id: string }>(
+    `select id::text
+     from vw_mdm_group_rule_active
+     where rule_set_code = $1
+       and entity_type_code = $2
+       and member_value = $3
+       and group_value = $4
+     limit 1`,
+    [
+      typeof payload.ruleSetCode === "string" && payload.ruleSetCode ? payload.ruleSetCode : "ventas_perseida_clientes",
+      typeof payload.entityTypeCode === "string" && payload.entityTypeCode ? payload.entityTypeCode : "CLIENT",
+      typeof payload.memberValue === "string" ? payload.memberValue : "",
+      typeof payload.groupValue === "string" ? payload.groupValue : "",
+    ],
+  );
+
+  if (result.rows[0]?.id) {
+    throw new PromotionConflictError("An active group rule with the same member and group already exists.", result.rows[0].id);
+  }
+}
+
+async function assertNoActiveParameterConflict(payload: Record<string, unknown>) {
+  const result = await query<{ id: string }>(
+    `select id::text
+     from vw_mdm_parameter_active
+     where parameter_key = $1
+       and parameter_value = $2
+       and domain = $3
+       and coalesce(parameter_scope_type, '') = coalesce($4, '')
+       and coalesce(parameter_scope_value, '') = coalesce($5, '')
+     limit 1`,
+    [
+      typeof payload.parameterKey === "string" ? payload.parameterKey : "extracted_param",
+      typeof payload.parameterValue === "string" ? payload.parameterValue : "",
+      typeof payload.domain === "string" ? payload.domain : "ventas_perseida",
+      typeof payload.parameterScopeType === "string" ? payload.parameterScopeType : null,
+      typeof payload.parameterScopeValue === "string" ? payload.parameterScopeValue : null,
+    ],
+  );
+
+  if (result.rows[0]?.id) {
+    throw new PromotionConflictError("An active parameter with the same key, value, and scope already exists.", result.rows[0].id);
+  }
+}
+
 async function promoteMapping(payload: Record<string, unknown>, actorId: string): Promise<string> {
+  await assertNoActiveMappingConflict(payload);
+
   const { ruleSetId, entityTypeId } = await resolveRuleSetAndEntityType(
     payload.ruleSetCode,
     payload.entityTypeCode,
@@ -176,6 +265,8 @@ async function promoteMapping(payload: Record<string, unknown>, actorId: string)
 }
 
 async function promoteGroup(payload: Record<string, unknown>, actorId: string): Promise<string> {
+  await assertNoActiveGroupConflict(payload);
+
   const { ruleSetId, entityTypeId } = await resolveRuleSetAndEntityType(
     payload.ruleSetCode,
     payload.entityTypeCode,
@@ -212,6 +303,8 @@ async function promoteParameter(
   payload: Record<string, unknown>,
   actorId: string,
 ): Promise<string> {
+  await assertNoActiveParameterConflict(payload);
+
   const id = createId();
   await query(
     `insert into mdm_parameter

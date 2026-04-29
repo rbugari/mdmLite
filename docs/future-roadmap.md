@@ -120,6 +120,18 @@ This principle should be preserved in all future consumption features.
 4. `GET /api/export/openlineage` — OpenLineage 1-0-5 COMPLETE RunEvent with mdmRules custom facet
 5. Integration guides in Help/Platforms for dbt seeds and OpenLineage (EN + ES)
 
+## v0.7 - Candidate Workflow Hardening
+
+### Status: closed
+
+### Scope delivered
+
+1. `POST /api/candidates/batch` deduplicates pending candidates by `candidate_type + payload`
+2. `GET /api/candidates/batch/[batchId]` returns batch totals and review progress
+3. `GET /api/candidates` accepts `batchId` filter for targeted review
+4. candidates UI supports batch filter drill-in and multi-select bulk promote/reject
+5. `POST /api/candidates/[id]/promote` returns `409` if an equivalent active rule already exists
+
 ## Cross-Cutting Requirements
 
 ### Candidate contract
@@ -148,17 +160,16 @@ Regardless of future inputs, downstream technical consumers keep reading from st
 
 The following items are identified as next in value order:
 
-### High value — candidate UX
-1. **Bulk promote/reject** — checkbox multi-select + "Promote selected" / "Reject selected" in candidates UI
-2. **Auto-promote threshold** — `INGEST_MIN_CONFIDENCE_AUTOPROMOTE` env var; candidates above threshold with `needsHumanReview=false` promote automatically on ingest
-3. **Duplicate detection on ingest** — check if `(candidate_type, payload)` already exists with `status='pending'` before inserting
+### High value — candidate automation
+1. **Auto-promote threshold** — `INGEST_MIN_CONFIDENCE_AUTOPROMOTE` env var; candidates above threshold with `needsHumanReview=false` promote automatically on ingest
+2. **ValidFrom normalization** — resolve natural values like `today` into actual dates before promote
 
-### Medium value — pipeline feedback
-4. **Batch status endpoint** — `GET /api/candidates/batch/:batchId` — total/pending/promoted/rejected counts
-5. **Promote conflict detection** — before creating draft, check if active rule with same key fields already exists; return 409 with warning
+### Medium value — operational feedback
+3. **Batch history screen** — list previous batches with source, counts, and review progress
+4. **Export promoted-by-batch** — export the draft/promoted records generated from one batch
 
 ### Strategic value
-6. **MCP server** — `.env` has `MCP_ENABLED=0`, `MCP_PORT=3103` reserved; exposes MDM rules to AI assistants via Model Context Protocol
+5. **MCP server** — `.env` has `MCP_ENABLED=0`, `MCP_PORT=3103` reserved; exposes MDM rules to AI assistants via Model Context Protocol
 
 ## Not Planned For Near Term
 
@@ -177,12 +188,6 @@ The following items are identified as next in value order:
 4. downstream consumers keep reading stable active contracts
 
 This preserves clean boundaries between analysis and governance.
-
-## Immediate Next Steps
-
-1. v0.3.1: snapshot export + platform guides (Databricks, Fabric)
-2. v0.4: documentation discovery from markdown and business notes
-3. v0.5: external candidate input from upstream analyzers
 
 ## Success Condition
 

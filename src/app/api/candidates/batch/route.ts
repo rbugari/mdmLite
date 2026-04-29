@@ -70,10 +70,26 @@ export async function POST(request: Request) {
   const batchId = createId();
   const accepted: string[] = [];
   const rejected: { index: number; reason: string }[] = [];
+  const duplicates: { index: number; candidateId: string }[] = [];
 
   for (let i = 0; i < body.candidates.length; i++) {
     const c = body.candidates[i]!;
     try {
+      const existingCandidate = await query<{ id: string }>(
+        `select id::text
+         from mdm_candidate
+         where candidate_type = $1
+           and payload = $2::jsonb
+           and status = 'pending'
+         limit 1`,
+        [c.candidateType, JSON.stringify(c.payload)],
+      );
+
+      if (existingCandidate.rows[0]?.id) {
+        duplicates.push({ index: i, candidateId: existingCandidate.rows[0].id });
+        continue;
+      }
+
       const id = createId();
       await query(
         `insert into mdm_candidate
@@ -114,10 +130,11 @@ export async function POST(request: Request) {
         sourceName: body.sourceName,
         sourceSystem: auth.sourceSystem,
         accepted: accepted.length,
+        duplicates: duplicates.length,
         rejected: rejected.length,
         batchId,
       }),
-      `External batch from ${auth.sourceSystem}: ${accepted.length} accepted, ${rejected.length} rejected`,
+      `External batch from ${auth.sourceSystem}: ${accepted.length} accepted, ${duplicates.length} duplicates, ${rejected.length} rejected`,
     ],
   );
 
@@ -128,7 +145,9 @@ export async function POST(request: Request) {
       ok: accepted.length > 0,
       batchId,
       accepted: accepted.length,
+      duplicates: duplicates.length,
       rejected: rejected.length,
+      ...(duplicates.length > 0 && { duplicateItems: duplicates }),
       ...(rejected.length > 0 && { rejectedItems: rejected }),
     },
     { status },

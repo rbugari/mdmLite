@@ -121,7 +121,7 @@ MDM Lite accepts candidates from:
 Review, approval, and promotion remain inside MDM Lite.
 
 Next capabilities in priority order:
-1. bulk promote/reject UI for candidate batches
-2. auto-promote threshold for high-confidence candidates from trusted sources
-3. duplicate detection on ingest
+1. auto-promote threshold for high-confidence candidates from trusted sources
+2. validFrom normalization for extracted candidates
+3. batch history and export-by-batch
 4. MCP server for AI assistant integration

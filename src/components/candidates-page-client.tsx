@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 type Candidate = {
   id: string;
@@ -12,6 +12,7 @@ type Candidate = {
   needs_human_review: boolean;
   status: string;
   source_document_name: string | null;
+  extraction_batch_id: string | null;
   created_by_email: string | null;
   created_at: string;
   reviewed_by_email: string | null;
@@ -34,6 +35,13 @@ type ActionResponse = {
   extracted?: number;
   batchId?: string;
   promotedRecordId?: string;
+};
+
+type BulkActionResult = {
+  action: "promote" | "reject";
+  requested: number;
+  succeeded: number;
+  failed: number;
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -98,12 +106,16 @@ export function CandidatesPageClient() {
   const [tab, setTab] = useState<"list" | "extract">("list");
   const [statusFilter, setStatusFilter] = useState("pending");
   const [typeFilter, setTypeFilter] = useState("");
+  const [batchFilter, setBatchFilter] = useState("");
   const [items, setItems] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [llmConfigured, setLlmConfigured] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkResult, setBulkResult] = useState<BulkActionResult | null>(null);
 
   // Extract form state
   const [extractText, setExtractText] = useState("");
@@ -117,6 +129,7 @@ export function CandidatesPageClient() {
     try {
       const params = new URLSearchParams({ status: statusFilter });
       if (typeFilter) params.set("type", typeFilter);
+      if (batchFilter) params.set("batchId", batchFilter);
       const res = await fetch(`/api/candidates?${params.toString()}`, { cache: "no-store" });
       const data = (await res.json()) as ListResponse;
       if (!data.ok) {
@@ -124,6 +137,7 @@ export function CandidatesPageClient() {
         return;
       }
       setItems(data.items ?? []);
+      setSelectedIds([]);
       setLlmConfigured(data.llmConfigured ?? false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error.");
@@ -135,11 +149,12 @@ export function CandidatesPageClient() {
   useEffect(() => {
     void loadCandidates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, typeFilter]);
+  }, [statusFilter, typeFilter, batchFilter]);
 
   async function handlePromote(id: string) {
     setProcessingId(id);
     setError(null);
+    setBulkResult(null);
     try {
       const res = await fetch(`/api/candidates/${id}/promote`, { method: "POST" });
       const data = (await res.json()) as ActionResponse;
@@ -158,6 +173,7 @@ export function CandidatesPageClient() {
   async function handleReject(id: string) {
     setProcessingId(id);
     setError(null);
+    setBulkResult(null);
     try {
       const res = await fetch(`/api/candidates/${id}/reject`, { method: "POST" });
       const data = (await res.json()) as ActionResponse;
@@ -192,6 +208,7 @@ export function CandidatesPageClient() {
         setExtractText("");
         setExtractDocName("");
         setStatusFilter("pending");
+        setBatchFilter(data.batchId ?? "");
         setTab("list");
         await loadCandidates();
       }
@@ -201,6 +218,53 @@ export function CandidatesPageClient() {
       setExtractBusy(false);
     }
   }
+
+  function toggleSelected(id: string, checked: boolean) {
+    setSelectedIds((current) => {
+      if (checked) {
+        return current.includes(id) ? current : [...current, id];
+      }
+      return current.filter((candidateId) => candidateId !== id);
+    });
+  }
+
+  async function handleBulkAction(action: "promote" | "reject") {
+    if (selectedIds.length === 0) return;
+
+    setBulkBusy(true);
+    setError(null);
+    setBulkResult(null);
+
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const id of selectedIds) {
+      try {
+        const res = await fetch(`/api/candidates/${id}/${action}`, { method: "POST" });
+        const data = (await res.json()) as ActionResponse;
+        if (data.ok) {
+          succeeded += 1;
+        } else {
+          failed += 1;
+        }
+      } catch {
+        failed += 1;
+      }
+    }
+
+    setBulkResult({
+      action,
+      requested: selectedIds.length,
+      succeeded,
+      failed,
+    });
+
+    await loadCandidates();
+    setBulkBusy(false);
+  }
+
+  const pendingItemIds = items.filter((item) => item.status === "pending").map((item) => item.id);
+  const allPendingSelected = pendingItemIds.length > 0 && pendingItemIds.every((id) => selectedIds.includes(id));
 
   return (
     <main className="page-shell page-shell--narrow">
@@ -322,15 +386,79 @@ export function CandidatesPageClient() {
               <option value="parameter">Parameter</option>
               <option value="unknown">Unknown</option>
             </select>
+            <input
+              className="form-input form-input--inline"
+              type="text"
+              placeholder="Filter by batch ID"
+              value={batchFilter}
+              onChange={(e) => setBatchFilter(e.target.value.trim())}
+              style={{ minWidth: "220px" }}
+            />
+            {batchFilter && (
+              <button
+                type="button"
+                className="btn btn--secondary btn--sm"
+                onClick={() => setBatchFilter("")}
+              >
+                Clear batch filter
+              </button>
+            )}
           </div>
 
+          {batchFilter && (
+            <div className="status-banner status-banner--info" style={{ marginBottom: "1rem" }}>
+              Showing only candidates from batch <strong>{batchFilter}</strong>.
+            </div>
+          )}
+
+          {selectedIds.length > 0 && (
+            <div
+              className="table-panel table-panel--padded"
+              style={{ marginBottom: "1rem", display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}
+            >
+              <strong>{selectedIds.length} selected</strong>
+              <button
+                type="button"
+                className="btn btn--primary btn--sm"
+                disabled={bulkBusy}
+                onClick={() => void handleBulkAction("promote")}
+              >
+                {bulkBusy ? "Processing…" : "Promote selected"}
+              </button>
+              <button
+                type="button"
+                className="btn btn--danger btn--sm"
+                disabled={bulkBusy}
+                onClick={() => void handleBulkAction("reject")}
+              >
+                {bulkBusy ? "Processing…" : "Reject selected"}
+              </button>
+              <button
+                type="button"
+                className="btn btn--secondary btn--sm"
+                disabled={bulkBusy}
+                onClick={() => setSelectedIds([])}
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
+
           {error && <div className="status-banner status-banner--error">{error}</div>}
+          {bulkResult && (
+            <div className={`status-banner ${bulkResult.failed > 0 ? "status-banner--warn" : "status-banner--success"}`}>
+              Bulk {bulkResult.action}: {bulkResult.succeeded} succeeded, {bulkResult.failed} failed, out of {bulkResult.requested} selected candidates.
+            </div>
+          )}
 
           {loading ? (
             <p className="muted-text">Loading…</p>
           ) : items.length === 0 ? (
             <div className="empty-state">
-              <p>No {statusFilter !== "all" ? statusFilter : ""} candidates.</p>
+              <p>
+                No {statusFilter !== "all" ? statusFilter : ""} candidates
+                {batchFilter ? ` for batch ${batchFilter}` : ""}.
+              </p>
               {statusFilter === "pending" && (
                 <button
                   type="button"
@@ -347,6 +475,14 @@ export function CandidatesPageClient() {
                 <table className="data-table">
                   <thead>
                     <tr>
+                      <th>
+                        <input
+                          type="checkbox"
+                          checked={allPendingSelected}
+                          aria-label="Select all pending candidates on page"
+                          onChange={(e) => setSelectedIds(e.target.checked ? pendingItemIds : [])}
+                        />
+                      </th>
                       <th>Type</th>
                       <th>Summary</th>
                       <th>Confidence</th>
@@ -357,13 +493,22 @@ export function CandidatesPageClient() {
                   </thead>
                   <tbody>
                     {items.map((item) => (
-                      <>
+                      <Fragment key={item.id}>
                         <tr
-                          key={item.id}
-                          className={processingId === item.id ? "row--busy" : ""}
+                          className={processingId === item.id || bulkBusy ? "row--busy" : ""}
                           style={{ cursor: "pointer" }}
                           onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                         >
+                          <td onClick={(e) => e.stopPropagation()}>
+                            {item.status === "pending" ? (
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.includes(item.id)}
+                                aria-label={`Select candidate ${item.id}`}
+                                onChange={(e) => toggleSelected(item.id, e.target.checked)}
+                              />
+                            ) : null}
+                          </td>
                           <td>
                             <span className={`badge badge--${item.candidate_type}`}>
                               {TYPE_LABELS[item.candidate_type] ?? item.candidate_type}
@@ -373,6 +518,21 @@ export function CandidatesPageClient() {
                           <td>{confidenceBar(item.confidence)}</td>
                           <td className="muted-text" style={{ fontSize: "0.8rem" }}>
                             {item.source_document_name ?? "—"}
+                            {item.extraction_batch_id && (
+                              <div>
+                                <button
+                                  type="button"
+                                  className="btn btn--secondary btn--sm"
+                                  style={{ marginTop: "0.35rem" }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setBatchFilter(item.extraction_batch_id ?? "");
+                                  }}
+                                >
+                                  Batch {item.extraction_batch_id.slice(0, 8)}
+                                </button>
+                              </div>
+                            )}
                           </td>
                           <td>
                             <span className={`badge badge--status-${item.status}`}>
@@ -385,7 +545,7 @@ export function CandidatesPageClient() {
                                 <button
                                   type="button"
                                   className="btn btn--primary btn--sm"
-                                  disabled={processingId === item.id}
+                                  disabled={processingId === item.id || bulkBusy}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     void handlePromote(item.id);
@@ -396,7 +556,7 @@ export function CandidatesPageClient() {
                                 <button
                                   type="button"
                                   className="btn btn--danger btn--sm"
-                                  disabled={processingId === item.id}
+                                  disabled={processingId === item.id || bulkBusy}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     void handleReject(item.id);
@@ -414,8 +574,8 @@ export function CandidatesPageClient() {
                           </td>
                         </tr>
                         {expandedId === item.id && (
-                          <tr key={`${item.id}-detail`} className="row--expanded">
-                            <td colSpan={6}>
+                          <tr className="row--expanded">
+                            <td colSpan={7}>
                               <div
                                 style={{
                                   padding: "0.75rem 1rem",
@@ -451,11 +611,14 @@ export function CandidatesPageClient() {
                                   Extracted {item.created_at?.slice(0, 10)} by{" "}
                                   {item.created_by_email ?? "system"}
                                 </div>
+                                {item.extraction_batch_id && (
+                                  <div className="muted-text">Batch ID: {item.extraction_batch_id}</div>
+                                )}
                               </div>
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>

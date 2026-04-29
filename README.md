@@ -1,8 +1,8 @@
 # MDM Lite
 
-**Status:** ✅ Active Development | **Version:** 0.6 | **Date:** 2026-04-21
+**Status:** ✅ Active Development | **Version:** 0.7 | **Date:** 2026-04-29
 
-Reference Data Manager (RDM) for centralized governance of business equivalences, groupings, and parameters with complete audit trail, approval workflow, non-destructive change management, LLM-assisted candidate discovery, external batch ingest API, and integration exports (dbt seeds, OpenLineage).
+Reference Data Manager (RDM) for centralized governance of business equivalences, groupings, and parameters with complete audit trail, approval workflow, non-destructive change management, LLM-assisted candidate discovery, external batch ingest API, bulk candidate review, conflict-safe promotion, and integration exports (dbt seeds, OpenLineage).
 
 ## Current Technical Focus
 
@@ -76,8 +76,9 @@ This is the current supported packaging baseline for customer-hosted trials on W
 | v0.4 | LLM document discovery, extract API, candidates UI | ✅ Closed |
 | v0.5 | External batch ingest API (API key auth, up to 500 candidates/call) | ✅ Closed |
 | v0.6 | Dashboard stats (pending approvals + candidates), dbt seeds export, OpenLineage export | ✅ Closed |
+| v0.7 | Candidate review hardening: batch status, dedupe, batch filter, bulk actions, conflict detection | ✅ Closed |
 
-**Last commit:** `3d6ebdc` — 2026-04-21
+**Last commit:** pending local changes for v0.7
 
 See [docs/prd-v2-operational-hardening.md](docs/prd-v2-operational-hardening.md) for detailed v2 specification and sign-off.
 
@@ -166,6 +167,13 @@ MDM_Lite/
 - ✅ **Manual review gate:** Candidates never auto-promote — human review always required
 - ✅ **Batch ingest API:** External pipelines can POST candidate packs via API key (`POST /api/candidates/batch`)
 - ✅ **Source tracking:** `sourceKind` tracks origin (document, legacy2lake, sql, notebook, orchestration, external, manual)
+
+### Candidate Review Hardening (v0.7)
+- ✅ **Bulk actions:** Multi-select `Promote selected` / `Reject selected` in the candidates UI
+- ✅ **Batch status endpoint:** `GET /api/candidates/batch/[batchId]` for pipeline feedback and totals
+- ✅ **Batch-focused review:** Candidate list can filter by `batchId` and drill into a specific batch from the UI
+- ✅ **Deduplication on ingest:** Batch ingest skips pending candidates with the same `candidate_type + payload`
+- ✅ **Conflict-safe promotion:** Promote returns `409` when an equivalent active rule already exists
 
 ### Integration Exports (v0.6)
 - ✅ **dbt seeds YAML:** `GET /api/export/dbt` — column types + descriptions + embedded CSV for `dbt seed`

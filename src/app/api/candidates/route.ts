@@ -32,6 +32,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status")?.trim() ?? "pending";
   const candidateType = searchParams.get("type")?.trim() ?? "";
+  const batchId = searchParams.get("batchId")?.trim() ?? "";
   const parsedLimit = Number(searchParams.get("limit") ?? "100");
   const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 500) : 100;
 
@@ -47,6 +48,11 @@ export async function GET(request: Request) {
   if (candidateType) {
     values.push(candidateType);
     conditions.push(`c.candidate_type = $${values.length}`);
+  }
+
+  if (batchId) {
+    values.push(batchId);
+    conditions.push(`c.extraction_batch_id::text = $${values.length}`);
   }
 
   const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
