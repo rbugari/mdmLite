@@ -1,8 +1,8 @@
 # MDM Lite
 
-**Status:** ✅ Active Development | **Version:** 0.7 | **Date:** 2026-04-29
+**Status:** ✅ Active Development | **Version:** 0.8 | **Date:** 2026-04-29
 
-Reference Data Manager (RDM) for centralized governance of business equivalences, groupings, and parameters with complete audit trail, approval workflow, non-destructive change management, LLM-assisted candidate discovery, external batch ingest API, bulk candidate review, conflict-safe promotion, and integration exports (dbt seeds, OpenLineage).
+Reference Data Manager (RDM) for centralized governance of business equivalences, groupings, and parameters with complete audit trail, approval workflow, non-destructive change management, LLM-assisted candidate discovery, external batch ingest API, bulk candidate review, conflict-safe promotion, optional auto-promote for trusted batches, and integration exports (dbt seeds, OpenLineage).
 
 ## Current Technical Focus
 
@@ -77,8 +77,9 @@ This is the current supported packaging baseline for customer-hosted trials on W
 | v0.5 | External batch ingest API (API key auth, up to 500 candidates/call) | ✅ Closed |
 | v0.6 | Dashboard stats (pending approvals + candidates), dbt seeds export, OpenLineage export | ✅ Closed |
 | v0.7 | Candidate review hardening: batch status, dedupe, batch filter, bulk actions, conflict detection | ✅ Closed |
+| v0.8 | Candidate automation: validFrom normalization + threshold-based auto-promote | ✅ Closed |
 
-**Last commit:** pending local changes for v0.7
+**Last commit:** pending local changes for v0.8
 
 See [docs/prd-v2-operational-hardening.md](docs/prd-v2-operational-hardening.md) for detailed v2 specification and sign-off.
 
@@ -164,7 +165,7 @@ MDM_Lite/
 ### Candidate Discovery (v0.4 + v0.5)
 - ✅ **LLM extraction:** Paste/upload text → LLM extracts mapping/group/parameter candidates
 - ✅ **Evidence + confidence:** Every candidate stores its evidence snippet and confidence score
-- ✅ **Manual review gate:** Candidates never auto-promote — human review always required
+- ✅ **Manual review gate:** Default behavior remains manual review for all candidates
 - ✅ **Batch ingest API:** External pipelines can POST candidate packs via API key (`POST /api/candidates/batch`)
 - ✅ **Source tracking:** `sourceKind` tracks origin (document, legacy2lake, sql, notebook, orchestration, external, manual)
 
@@ -174,6 +175,12 @@ MDM_Lite/
 - ✅ **Batch-focused review:** Candidate list can filter by `batchId` and drill into a specific batch from the UI
 - ✅ **Deduplication on ingest:** Batch ingest skips pending candidates with the same `candidate_type + payload`
 - ✅ **Conflict-safe promotion:** Promote returns `409` when an equivalent active rule already exists
+
+### Candidate Automation (v0.8)
+- ✅ **validFrom normalization:** natural values like `today`, `tomorrow`, `now`, or ISO datetimes resolve to `YYYY-MM-DD`
+- ✅ **Shared promotion logic:** manual promote and auto-promote use the same conflict-safe promotion path
+- ✅ **Auto-promote threshold:** `INGEST_MIN_CONFIDENCE_AUTOPROMOTE` auto-promotes batch candidates when `confidence >= threshold` and `needsHumanReview=false`
+- ✅ **Batch telemetry:** batch responses and batch-status endpoint include `autoPromoted` counts and deferred auto-promote reasons
 
 ### Integration Exports (v0.6)
 - ✅ **dbt seeds YAML:** `GET /api/export/dbt` — column types + descriptions + embedded CSV for `dbt seed`
@@ -264,6 +271,9 @@ LLM_MODEL=gpt-4o-mini
 
 # External batch ingest API key (optional — enables POST /api/candidates/batch)
 INGEST_API_KEY=change-to-a-random-string-min-32-chars
+
+# Optional v0.8 automation threshold (0-1)
+INGEST_MIN_CONFIDENCE_AUTOPROMOTE=0.95
 ```
 
 `DATABASE_SSL_MODE` supports `disable`, `require`, and `no-verify`. Use `require` for managed PostgreSQL with valid certificates, `disable` for local trusted setups, and `no-verify` only for temporary compatibility tests.
@@ -351,7 +361,8 @@ GET  /api/candidates                     # ?status=pending|promoted|rejected|all
 GET  /api/candidates/[id]
 POST /api/candidates/[id]/promote        # { comments? } → creates DRAFT rule
 POST /api/candidates/[id]/reject         # { comments? }
-POST /api/candidates/batch               # Bearer <INGEST_API_KEY> — external batch ingest
+POST /api/candidates/batch               # Bearer <INGEST_API_KEY> — external batch ingest (+ optional auto-promote)
+GET  /api/candidates/batch/[batchId]     # Batch status: accepted / autoPromoted / duplicates / review counts
 ```
 
 ### Exports (v0.3.1 + v0.6)

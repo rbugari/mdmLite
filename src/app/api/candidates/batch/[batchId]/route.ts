@@ -20,6 +20,7 @@ type BatchAuditRow = {
     sourceName?: string;
     sourceSystem?: string;
     accepted?: number;
+    autoPromoted?: number;
     duplicates?: number;
     rejected?: number;
     batchId?: string;
@@ -114,6 +115,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ batc
     sourceName: auditMeta?.sourceName ?? sourceName,
     sourceSystem: auditMeta?.sourceSystem ?? (auth.mode === "ingest" ? auth.sourceSystem : null),
     accepted: Number(auditMeta?.accepted ?? counts.pending + counts.promoted + counts.rejected),
+    autoPromoted: Number(auditMeta?.autoPromoted ?? 0),
     duplicates: Number(auditMeta?.duplicates ?? 0),
     rejectedOnIngest: Number(auditMeta?.rejected ?? 0),
     counts,

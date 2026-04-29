@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { normalizeCandidatePayload, PromotionConflictError, promoteCandidateRecord } from "@/lib/candidate-promotion";
 import { query } from "@/lib/db";
+import { env } from "@/lib/env";
 import { createId } from "@/lib/ids";
 import { validateIngestKey } from "@/lib/ingest-auth";
 
@@ -71,10 +73,16 @@ export async function POST(request: Request) {
   const accepted: string[] = [];
   const rejected: { index: number; reason: string }[] = [];
   const duplicates: { index: number; candidateId: string }[] = [];
+  const autoPromoted: string[] = [];
+  const autoPromoteDeferred: { index: number; candidateId: string; reason: string }[] = [];
+
+  const autoPromoteThreshold = env.INGEST_MIN_CONFIDENCE_AUTOPROMOTE;
 
   for (let i = 0; i < body.candidates.length; i++) {
     const c = body.candidates[i]!;
     try {
+      const normalizedPayload = normalizeCandidatePayload(c.candidateType, c.payload);
+
       const existingCandidate = await query<{ id: string }>(
         `select id::text
          from mdm_candidate
@@ -82,7 +90,7 @@ export async function POST(request: Request) {
            and payload = $2::jsonb
            and status = 'pending'
          limit 1`,
-        [c.candidateType, JSON.stringify(c.payload)],
+        [c.candidateType, JSON.stringify(normalizedPayload)],
       );
 
       if (existingCandidate.rows[0]?.id) {
@@ -100,7 +108,7 @@ export async function POST(request: Request) {
           id,
           body.sourceKind,
           c.candidateType,
-          JSON.stringify(c.payload),
+          JSON.stringify(normalizedPayload),
           c.evidence ?? null,
           c.confidence ?? null,
           c.needsHumanReview,
@@ -109,6 +117,37 @@ export async function POST(request: Request) {
         ],
       );
       accepted.push(id);
+
+      const canAutoPromote =
+        autoPromoteThreshold !== undefined &&
+        c.candidateType !== "unknown" &&
+        c.needsHumanReview === false &&
+        typeof c.confidence === "number" &&
+        c.confidence >= autoPromoteThreshold;
+
+      if (canAutoPromote) {
+        try {
+          await promoteCandidateRecord({
+            candidateId: id,
+            candidateType: c.candidateType,
+            payload: normalizedPayload,
+            actorId: null,
+            comments: `Auto-promoted from ${auth.sourceSystem} batch ingest`,
+          });
+          autoPromoted.push(id);
+        } catch (autoPromoteError) {
+          autoPromoteDeferred.push({
+            index: i,
+            candidateId: id,
+            reason:
+              autoPromoteError instanceof PromotionConflictError
+                ? autoPromoteError.message
+                : autoPromoteError instanceof Error
+                  ? autoPromoteError.message
+                  : "Auto-promote failed.",
+          });
+        }
+      }
     } catch (rowErr) {
       rejected.push({
         index: i,
@@ -130,11 +169,12 @@ export async function POST(request: Request) {
         sourceName: body.sourceName,
         sourceSystem: auth.sourceSystem,
         accepted: accepted.length,
+        autoPromoted: autoPromoted.length,
         duplicates: duplicates.length,
         rejected: rejected.length,
         batchId,
       }),
-      `External batch from ${auth.sourceSystem}: ${accepted.length} accepted, ${duplicates.length} duplicates, ${rejected.length} rejected`,
+      `External batch from ${auth.sourceSystem}: ${accepted.length} accepted, ${autoPromoted.length} auto-promoted, ${duplicates.length} duplicates, ${rejected.length} rejected`,
     ],
   );
 
@@ -145,8 +185,10 @@ export async function POST(request: Request) {
       ok: accepted.length > 0,
       batchId,
       accepted: accepted.length,
+      autoPromoted: autoPromoted.length,
       duplicates: duplicates.length,
       rejected: rejected.length,
+      ...(autoPromoteDeferred.length > 0 && { autoPromoteDeferred }),
       ...(duplicates.length > 0 && { duplicateItems: duplicates }),
       ...(rejected.length > 0 && { rejectedItems: rejected }),
     },

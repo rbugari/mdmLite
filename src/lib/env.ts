@@ -16,6 +16,15 @@ const envSchema = z.object({
   LLM_AZURE_ENDPOINT: z.string().optional(),
   // Ingest API key (v0.5 external candidate input). Optional - batch endpoint disabled when absent.
   INGEST_API_KEY: z.string().min(32).optional(),
+  // Optional v0.8 automation threshold. Only candidates above threshold and without human review are auto-promoted.
+  INGEST_MIN_CONFIDENCE_AUTOPROMOTE: z.preprocess(
+    (value) => {
+      if (value === undefined || value === null || value === "") return undefined;
+      if (typeof value === "string") return Number(value);
+      return value;
+    },
+    z.number().min(0).max(1).optional(),
+  ),
 });
 
 const parsedEnv = envSchema.safeParse({
@@ -32,6 +41,7 @@ const parsedEnv = envSchema.safeParse({
   LLM_MODEL: process.env.LLM_MODEL,
   LLM_AZURE_ENDPOINT: process.env.LLM_AZURE_ENDPOINT,
   INGEST_API_KEY: process.env.INGEST_API_KEY,
+  INGEST_MIN_CONFIDENCE_AUTOPROMOTE: process.env.INGEST_MIN_CONFIDENCE_AUTOPROMOTE,
 });
 
 if (!parsedEnv.success) {

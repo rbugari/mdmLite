@@ -132,6 +132,17 @@ This principle should be preserved in all future consumption features.
 4. candidates UI supports batch filter drill-in and multi-select bulk promote/reject
 5. `POST /api/candidates/[id]/promote` returns `409` if an equivalent active rule already exists
 
+## v0.8 - Candidate Automation
+
+### Status: closed
+
+### Scope delivered
+
+1. `INGEST_MIN_CONFIDENCE_AUTOPROMOTE` env var enables threshold-based auto-promote for trusted batch candidates
+2. `validFrom` values like `today`, `tomorrow`, `now`, and ISO datetimes normalize to `YYYY-MM-DD`
+3. manual promote and auto-promote share the same conflict-safe promotion logic
+4. batch ingest response and batch status endpoint include `autoPromoted` telemetry
+
 ## Cross-Cutting Requirements
 
 ### Candidate contract
@@ -156,17 +167,17 @@ Any candidate input must include:
 
 Regardless of future inputs, downstream technical consumers keep reading from stable approved active views.
 
-## Candidate Roadmap (v0.7+)
+## Candidate Roadmap (v0.9+)
 
 The following items are identified as next in value order:
 
-### High value — candidate automation
-1. **Auto-promote threshold** — `INGEST_MIN_CONFIDENCE_AUTOPROMOTE` env var; candidates above threshold with `needsHumanReview=false` promote automatically on ingest
-2. **ValidFrom normalization** — resolve natural values like `today` into actual dates before promote
+### High value — candidate operations
+1. **Batch history screen** — list previous batches with source, counts, and review progress
+2. **Export promoted-by-batch** — export the draft/promoted records generated from one batch
 
 ### Medium value — operational feedback
-3. **Batch history screen** — list previous batches with source, counts, and review progress
-4. **Export promoted-by-batch** — export the draft/promoted records generated from one batch
+3. **Auto-promote audit view** — filter candidate/audit screens by auto-promoted vs manually promoted
+4. **Trusted source policy** — per-source thresholds instead of one global env var
 
 ### Strategic value
 5. **MCP server** — `.env` has `MCP_ENABLED=0`, `MCP_PORT=3103` reserved; exposes MDM rules to AI assistants via Model Context Protocol

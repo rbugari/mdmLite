@@ -6,7 +6,7 @@ Describe the real current state of MDM Lite, aligned with what is implemented to
 
 ## Real Current State
 
-MDM Lite is at **v0.7** with a complete operational product that provides:
+MDM Lite is at **v0.8** with a complete operational product that provides:
 
 1. authenticated admin access for all operational pages
 2. manual create and edit flows for mappings, groups, and parameters
@@ -20,12 +20,14 @@ MDM Lite is at **v0.7** with a complete operational product that provides:
 10. external batch ingest API with API key authentication (v0.5)
 11. candidate review UI with batch filter and bulk promote/reject actions (v0.7)
 12. deduplicated candidate ingest and batch status endpoint (v0.7)
-12. integration exports: dbt seeds YAML, OpenLineage RunEvent, CSV, snapshot (v0.3.1 + v0.6)
-13. conflict-safe candidate promotion against active rules (v0.7)
-14. dashboard stats: active rules + pending approvals + pending candidates (v0.6)
-15. contextual Help for administration, positioning, platform consumption, and integration guides
-16. bilingual UI (English + Spanish)
-17. DB health endpoint
+13. shared candidate promotion logic with validFrom normalization (v0.8)
+14. optional threshold-based auto-promote for trusted batch candidates (v0.8)
+15. integration exports: dbt seeds YAML, OpenLineage RunEvent, CSV, snapshot (v0.3.1 + v0.6)
+16. conflict-safe candidate promotion against active rules (v0.7)
+17. dashboard stats: active rules + pending approvals + pending candidates (v0.6)
+18. contextual Help for administration, positioning, platform consumption, and integration guides
+19. bilingual UI (English + Spanish)
+20. DB health endpoint
 
 ## What Is Implemented Today
 
@@ -82,8 +84,8 @@ MDM Lite is at **v0.7** with a complete operational product that provides:
 19. `GET /api/candidates/[id]`
 20. `POST /api/candidates/[id]/promote` — `{ comments? }` → creates DRAFT in target table → status='promoted' or returns `409` if equivalent active rule exists
 21. `POST /api/candidates/[id]/reject` — `{ comments? }` → status='rejected'
-22. `POST /api/candidates/batch` — Bearer `<INGEST_API_KEY>` + optional `X-Source-System` header. Body: `{ sourceKind, sourceName, candidates[] }`. Up to 500/call. Row-level error handling + deduplication.
-23. `GET /api/candidates/batch/[batchId]` — admin session or ingest Bearer key. Returns accepted/duplicate/rejected ingest counts and pending/promoted/rejected review counts.
+22. `POST /api/candidates/batch` — Bearer `<INGEST_API_KEY>` + optional `X-Source-System` header. Body: `{ sourceKind, sourceName, candidates[] }`. Up to 500/call. Row-level error handling + deduplication + optional auto-promote.
+23. `GET /api/candidates/batch/[batchId]` — admin session or ingest Bearer key. Returns accepted/autoPromoted/duplicate/rejected ingest counts and pending/promoted/rejected review counts.
 
 #### Exports (v0.3.1 + v0.6)
 24. `GET /api/export/mappings` — CSV file download
@@ -169,6 +171,7 @@ Any candidate stored in `mdm_candidate` must include:
 |-------|----------|-------------|
 | `candidate_type` | yes | `mapping`, `group`, `parameter`, `unknown` |
 | `payload` | yes | JSONB — type-specific fields |
+| `payload.validFrom` | normalized on promote | `today`, `tomorrow`, `now`, ISO datetime → `YYYY-MM-DD` |
 | `evidence` | yes | Text snippet justifying the candidate |
 | `confidence` | yes | Float 0–1 |
 | `source_kind` | yes | `document`, `external`, `manual`, `legacy2lake`, `sql`, `notebook`, `orchestration` |
@@ -201,10 +204,10 @@ These define the next roadmap, not the validity of the current product.
 
 ### Product gaps
 
-1. no auto-promote threshold (candidates with high confidence still require manual review)
-2. no validFrom normalization for extracted natural values like `today`
-3. no batch history screen for past ingests and progress
-4. no export of promoted rules scoped to a batch
+1. no batch history screen for past ingests and progress
+2. no export of promoted rules scoped to a batch
+3. no per-source trusted threshold policy (only one global env threshold)
+4. no explicit auto-promote reporting view in UI
 
 ### Platform gaps
 
@@ -215,7 +218,7 @@ These define the next roadmap, not the validity of the current product.
 
 ## Functional Contract For Current Product
 
-For the current product (v0.7), MDM Lite should be treated as:
+For the current product (v0.8), MDM Lite should be treated as:
 
 1. admin-managed rule administration through UI
 2. governed approval workflow with audit trail
@@ -224,12 +227,13 @@ For the current product (v0.7), MDM Lite should be treated as:
 5. external candidate ingest from pipelines (API key protected)
 6. active SQL consumption for downstream technical processes
 7. integration export to dbt and OpenLineage-compatible catalogues
-8. contextual product help for administration, platform, and integration consumption
+8. optional threshold-based auto-promote for trusted external batches
+9. contextual product help for administration, platform, and integration consumption
 
 It should not yet be treated as:
 
 1. enterprise IAM or enterprise RBAC product
-2. autonomous rule publishing engine (all promotion is manual)
+2. autonomous rule publishing engine for all sources (auto-promote is opt-in and batch-only)
 3. multi-tenant or multi-company platform
 4. replacement for Purview, Unity Catalog, Collibra, or dbt
 

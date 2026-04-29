@@ -104,8 +104,9 @@ Current candidate entry modes:
 2. csv/xlsx import
 3. document paste → LLM extraction → human review → promote
 4. external batch ingest via API key (from pipelines, Legacy2Lake, or any analyzer)
+5. optional threshold-based auto-promote for trusted batch candidates
 
-All promotion is manual. MDM Lite never autonomously publishes to final rule tables.
+Promotion is manual by default. MDM Lite only auto-promotes when an explicit confidence threshold is configured and the candidate says `needsHumanReview=false`.
 
 ## Future Direction
 
@@ -121,7 +122,7 @@ MDM Lite accepts candidates from:
 Review, approval, and promotion remain inside MDM Lite.
 
 Next capabilities in priority order:
-1. auto-promote threshold for high-confidence candidates from trusted sources
-2. validFrom normalization for extracted candidates
-3. batch history and export-by-batch
+1. batch history and export-by-batch
+2. per-source trusted threshold policy
+3. auto-promote reporting in UI
 4. MCP server for AI assistant integration
