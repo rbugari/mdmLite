@@ -143,6 +143,16 @@ This principle should be preserved in all future consumption features.
 3. manual promote and auto-promote share the same conflict-safe promotion logic
 4. batch ingest response and batch status endpoint include `autoPromoted` telemetry
 
+## v0.9 - Candidate Operations
+
+### Status: closed
+
+### Scope delivered
+
+1. `GET /api/candidates/batch` lists recent batches with source, ingest results, and review progress
+2. batch history supports `sourceKind`, `reviewState`, and `limit` filters
+3. candidates UI includes a `Batch history` tab with `Open batch` drill-in to the filtered review list
+
 ## Cross-Cutting Requirements
 
 ### Candidate contract
@@ -167,13 +177,13 @@ Any candidate input must include:
 
 Regardless of future inputs, downstream technical consumers keep reading from stable approved active views.
 
-## Candidate Roadmap (v0.9+)
+## Candidate Roadmap (v1.0+)
 
 The following items are identified as next in value order:
 
 ### High value — candidate operations
-1. **Batch history screen** — list previous batches with source, counts, and review progress
-2. **Export promoted-by-batch** — export the draft/promoted records generated from one batch
+1. **Export promoted-by-batch** — export the draft/promoted records generated from one batch
+2. **Batch detail analytics** — show conflicts, deferred auto-promote reasons, and throughput per batch in UI
 
 ### Medium value — operational feedback
 3. **Auto-promote audit view** — filter candidate/audit screens by auto-promoted vs manually promoted

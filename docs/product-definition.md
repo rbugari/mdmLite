@@ -122,7 +122,7 @@ MDM Lite accepts candidates from:
 Review, approval, and promotion remain inside MDM Lite.
 
 Next capabilities in priority order:
-1. batch history and export-by-batch
+1. export-by-batch
 2. per-source trusted threshold policy
 3. auto-promote reporting in UI
 4. MCP server for AI assistant integration

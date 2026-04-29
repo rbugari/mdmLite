@@ -1,6 +1,6 @@
 # MDM Lite
 
-**Status:** ✅ Active Development | **Version:** 0.8 | **Date:** 2026-04-29
+**Status:** ✅ Active Development | **Version:** 0.9 | **Date:** 2026-04-29
 
 Reference Data Manager (RDM) for centralized governance of business equivalences, groupings, and parameters with complete audit trail, approval workflow, non-destructive change management, LLM-assisted candidate discovery, external batch ingest API, bulk candidate review, conflict-safe promotion, optional auto-promote for trusted batches, and integration exports (dbt seeds, OpenLineage).
 
@@ -78,8 +78,9 @@ This is the current supported packaging baseline for customer-hosted trials on W
 | v0.6 | Dashboard stats (pending approvals + candidates), dbt seeds export, OpenLineage export | ✅ Closed |
 | v0.7 | Candidate review hardening: batch status, dedupe, batch filter, bulk actions, conflict detection | ✅ Closed |
 | v0.8 | Candidate automation: validFrom normalization + threshold-based auto-promote | ✅ Closed |
+| v0.9 | Candidate operations: batch history API and review progress UI | ✅ Closed |
 
-**Last commit:** pending local changes for v0.8
+**Latest closed milestone:** v0.9 candidate operations
 
 See [docs/prd-v2-operational-hardening.md](docs/prd-v2-operational-hardening.md) for detailed v2 specification and sign-off.
 
@@ -181,6 +182,11 @@ MDM_Lite/
 - ✅ **Shared promotion logic:** manual promote and auto-promote use the same conflict-safe promotion path
 - ✅ **Auto-promote threshold:** `INGEST_MIN_CONFIDENCE_AUTOPROMOTE` auto-promotes batch candidates when `confidence >= threshold` and `needsHumanReview=false`
 - ✅ **Batch telemetry:** batch responses and batch-status endpoint include `autoPromoted` counts and deferred auto-promote reasons
+
+### Candidate Operations (v0.9)
+- ✅ **Batch history API:** `GET /api/candidates/batch` returns recent batches with source, ingest results, and review progress
+- ✅ **History filters:** `sourceKind`, `reviewState`, and `limit` support targeted operational review
+- ✅ **History UI:** a dedicated `Batch history` tab lets admins drill directly into a chosen batch
 
 ### Integration Exports (v0.6)
 - ✅ **dbt seeds YAML:** `GET /api/export/dbt` — column types + descriptions + embedded CSV for `dbt seed`

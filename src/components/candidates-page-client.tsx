@@ -37,6 +37,32 @@ type ActionResponse = {
   promotedRecordId?: string;
 };
 
+type BatchHistoryItem = {
+  batchId: string;
+  sourceKind: string | null;
+  sourceName: string | null;
+  sourceSystem: string | null;
+  accepted: number;
+  autoPromoted: number;
+  duplicates: number;
+  rejectedOnIngest: number;
+  counts: {
+    pending: number;
+    promoted: number;
+    rejected: number;
+  };
+  totalStored: number;
+  reviewState: "open" | "completed";
+  firstCreatedAt: string;
+  lastReviewedAt: string | null;
+};
+
+type BatchHistoryResponse = {
+  ok: boolean;
+  error?: string;
+  items?: BatchHistoryItem[];
+};
+
 type BulkActionResult = {
   action: "promote" | "reject";
   requested: number;
@@ -103,11 +129,16 @@ function payloadSummary(type: string, payload: Record<string, unknown>): string 
 }
 
 export function CandidatesPageClient() {
-  const [tab, setTab] = useState<"list" | "extract">("list");
+  const [tab, setTab] = useState<"list" | "extract" | "history">("list");
   const [statusFilter, setStatusFilter] = useState("pending");
   const [typeFilter, setTypeFilter] = useState("");
   const [batchFilter, setBatchFilter] = useState("");
   const [items, setItems] = useState<Candidate[]>([]);
+  const [historyItems, setHistoryItems] = useState<BatchHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historySourceKind, setHistorySourceKind] = useState("");
+  const [historyReviewState, setHistoryReviewState] = useState("all");
   const [loading, setLoading] = useState(true);
   const [llmConfigured, setLlmConfigured] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,10 +177,42 @@ export function CandidatesPageClient() {
     }
   }
 
+  async function loadBatchHistory() {
+    setHistoryLoading(true);
+    setHistoryError(null);
+
+    try {
+      const params = new URLSearchParams({ limit: "20" });
+      if (historySourceKind) params.set("sourceKind", historySourceKind);
+      if (historyReviewState !== "all") params.set("reviewState", historyReviewState);
+
+      const res = await fetch(`/api/candidates/batch?${params.toString()}`, { cache: "no-store" });
+      const data = (await res.json()) as BatchHistoryResponse;
+
+      if (!data.ok) {
+        setHistoryError(data.error ?? "Cannot load batch history.");
+        return;
+      }
+
+      setHistoryItems(data.items ?? []);
+    } catch (e) {
+      setHistoryError(e instanceof Error ? e.message : "Unknown error.");
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
   useEffect(() => {
     void loadCandidates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, typeFilter, batchFilter]);
+
+  useEffect(() => {
+    if (tab === "history") {
+      void loadBatchHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, historySourceKind, historyReviewState]);
 
   async function handlePromote(id: string) {
     setProcessingId(id);
@@ -295,6 +358,13 @@ export function CandidatesPageClient() {
         >
           Extract from document
         </button>
+        <button
+          type="button"
+          className={`tab-btn${tab === "history" ? " tab-btn--active" : ""}`}
+          onClick={() => setTab("history")}
+        >
+          Batch history
+        </button>
       </div>
 
       {/* Extract tab */}
@@ -357,6 +427,107 @@ export function CandidatesPageClient() {
               </button>
             </div>
           </form>
+        </section>
+      )}
+
+      {tab === "history" && (
+        <section className="table-panel table-panel--padded">
+          <div className="filter-bar" style={{ marginBottom: "1rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            <select
+              className="form-input form-input--inline"
+              value={historySourceKind}
+              onChange={(e) => setHistorySourceKind(e.target.value)}
+            >
+              <option value="">All sources</option>
+              <option value="document">Document</option>
+              <option value="external">External</option>
+              <option value="manual">Manual</option>
+              <option value="legacy2lake">Legacy2Lake</option>
+              <option value="sql">SQL</option>
+              <option value="notebook">Notebook</option>
+              <option value="orchestration">Orchestration</option>
+            </select>
+            <select
+              className="form-input form-input--inline"
+              value={historyReviewState}
+              onChange={(e) => setHistoryReviewState(e.target.value)}
+            >
+              <option value="all">All review states</option>
+              <option value="open">Open</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          {historyError && <div className="status-banner status-banner--error">{historyError}</div>}
+
+          {historyLoading ? (
+            <p className="muted-text">Loading batch history…</p>
+          ) : historyItems.length === 0 ? (
+            <div className="empty-state">
+              <p>No batches found for the current filters.</p>
+            </div>
+          ) : (
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Batch</th>
+                    <th>Source</th>
+                    <th>Stored</th>
+                    <th>Review progress</th>
+                    <th>Ingest result</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyItems.map((batch) => (
+                    <tr key={batch.batchId}>
+                      <td>
+                        <strong>{batch.batchId.slice(0, 8)}</strong>
+                        <div className="muted-text">{batch.firstCreatedAt.slice(0, 10)}</div>
+                      </td>
+                      <td>
+                        <div>{batch.sourceName ?? "—"}</div>
+                        <div className="muted-text">
+                          {(batch.sourceKind ?? "unknown").toUpperCase()}
+                          {batch.sourceSystem ? ` · ${batch.sourceSystem}` : ""}
+                        </div>
+                      </td>
+                      <td>
+                        <strong>{batch.totalStored}</strong>
+                        <div className="muted-text">accepted {batch.accepted}</div>
+                      </td>
+                      <td>
+                        <div>Pending {batch.counts.pending}</div>
+                        <div className="muted-text">
+                          Promoted {batch.counts.promoted} · Rejected {batch.counts.rejected}
+                        </div>
+                      </td>
+                      <td>
+                        <div>Auto {batch.autoPromoted}</div>
+                        <div className="muted-text">
+                          Duplicates {batch.duplicates} · Rejected {batch.rejectedOnIngest}
+                        </div>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn--primary btn--sm"
+                          onClick={() => {
+                            setBatchFilter(batch.batchId);
+                            setStatusFilter(batch.reviewState === "completed" ? "all" : "pending");
+                            setTab("list");
+                          }}
+                        >
+                          Open batch
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
 
