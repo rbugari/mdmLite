@@ -230,6 +230,9 @@ psql -d mdm_lite -c "DELETE FROM mdm_parameter WHERE code LIKE 'CAS_%';"
 - mapping non-destructive replacement via UI
 - import demo plus csv preview/confirm
 - help content for admin and platform usage
+- candidate batch history tab interactions
+- batch analytics detail with conflict and deferred auto-promote evidence
+- batch export download and content validation from browser UI
 
 **Expected output:**
 ```bash

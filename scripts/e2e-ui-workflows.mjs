@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -53,8 +54,27 @@ async function cleanupUiRecords(connectionString) {
         where parameter_key like 'UI_%'
            or parameter_scope_value like 'UI_%'
            or parameter_value like 'UI_%'
+        union
+        select id from mdm_candidate
+        where source_document_name like 'UI_%'
+            or extraction_batch_id::text like 'ui_batch_%'
+           or payload::text like '%UI_%'
+        union
+        select extraction_batch_id from mdm_candidate
+        where extraction_batch_id is not null
+          and (
+            source_document_name like 'UI_%'
+            or extraction_batch_id::text like 'ui_batch_%'
+            or payload::text like '%UI_%'
+          )
       )
          or comments ilike 'ui-e2e%'
+    `);
+    await client.query(`
+      delete from mdm_candidate
+      where source_document_name like 'UI_%'
+          or extraction_batch_id::text like 'ui_batch_%'
+         or payload::text like '%UI_%'
     `);
     await client.query("delete from mdm_mapping_rule where source_value like 'UI_%' or target_value like 'UI_%'");
     await client.query("delete from mdm_group_rule where member_value like 'UI_%' or group_value like 'UI_%'");
@@ -71,6 +91,102 @@ async function cleanupUiRecords(connectionString) {
   } finally {
     await client.end();
   }
+}
+
+async function createUiCandidateBatch(connectionString, options) {
+  const client = new Client({ connectionString });
+  await client.connect();
+
+  const { stamp, conflictSourceValue, conflictTargetValue } = options;
+  const batchId = randomUUID();
+  const sourceName = `UI_BATCH_${stamp}`;
+  const promotableCandidateId = randomUUID();
+  const conflictCandidateId = randomUUID();
+  const promotableSourceValue = `UI_BATCH_SOURCE_${stamp}`;
+  const promotableTargetValue = `UI_BATCH_TARGET_${stamp}`;
+
+  const promotablePayload = {
+    ruleSetCode: "ventas_perseida_clientes",
+    entityTypeCode: "CLIENT",
+    sourceKey: "extracted",
+    sourceValue: promotableSourceValue,
+    targetValue: promotableTargetValue,
+    validFrom: "2024-01-01",
+  };
+
+  const conflictPayload = {
+    ruleSetCode: "ventas_perseida_clientes",
+    entityTypeCode: "CLIENT",
+    sourceKey: "customer_name",
+    sourceValue: conflictSourceValue,
+    targetValue: conflictTargetValue,
+    validFrom: "2024-01-01",
+  };
+
+  try {
+    await client.query("begin");
+    await client.query(
+      `insert into mdm_candidate
+         (id, source_kind, candidate_type, payload, evidence, confidence,
+          needs_human_review, status, source_document_name, extraction_batch_id)
+       values
+         ($1, 'external', 'mapping', $2::jsonb, $3, $4, true, 'pending', $5, $6),
+         ($7, 'external', 'mapping', $8::jsonb, $9, $10, true, 'pending', $5, $6)`,
+      [
+        promotableCandidateId,
+        JSON.stringify(promotablePayload),
+        "ui-e2e batch candidate ready for manual promotion",
+        0.91,
+        sourceName,
+        batchId,
+        conflictCandidateId,
+        JSON.stringify(conflictPayload),
+        "ui-e2e batch candidate expected to conflict with active rule",
+        0.83,
+      ],
+    );
+    await client.query(
+      `insert into mdm_change_log
+         (id, table_name, record_id, action_type, new_value_json, comments)
+       values ($1, 'mdm_candidate', $2, 'extract', $3::jsonb, $4)`,
+      [
+        randomUUID(),
+        batchId,
+        JSON.stringify({
+          sourceKind: "external",
+          sourceName,
+          sourceSystem: "UI_E2E",
+          accepted: 2,
+          autoPromoted: 0,
+          duplicates: 1,
+          rejected: 0,
+          batchId,
+          autoPromoteDeferred: [
+            {
+              index: 1,
+              candidateId: conflictCandidateId,
+              reason: "Conflict detected during trusted auto-promote dry run",
+            },
+          ],
+        }),
+        "ui-e2e batch setup",
+      ],
+    );
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    await client.end();
+  }
+
+  return {
+    batchId,
+    sourceName,
+    promotableSourceValue,
+    conflictSourceValue,
+    conflictTargetValue,
+  };
 }
 
 async function waitForBodyText(page, text, timeout = 15000) {
@@ -199,6 +315,14 @@ async function writeImportFile(filePath, stamp) {
 
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, `${content}\n`, "utf8");
+}
+
+async function waitForDownloadJson(page, trigger, outputPath) {
+  const downloadPromise = page.waitForEvent("download");
+  await trigger();
+  const download = await downloadPromise;
+  await download.saveAs(outputPath);
+  return JSON.parse(fs.readFileSync(outputPath, "utf8"));
 }
 
 function languageGroup(page) {
@@ -359,7 +483,16 @@ async function main() {
       await editRow.locator('input[name="targetValue"]').fill(mappingEditTargetV2);
       await editRow.locator('input[name="validFrom"]').fill("2024-02-01");
       await editRow.locator('input[name="comments"]').fill("ui-e2e mapping replacement edit");
+      const updateResponsePromise = page.waitForResponse(
+        (response) => response.request().method() === "PUT" && /\/api\/mappings\//.test(response.url()),
+        { timeout: 15000 },
+      );
       await editRow.getByRole("button", { name: "Save changes" }).click();
+      const updateResponse = await updateResponsePromise;
+      const updatePayload = await updateResponse.json();
+      ensure(updateResponse.ok(), "Mapping update request failed");
+      ensure(updatePayload.ok === true, "Mapping update response was not ok");
+      await page.waitForSelector("tr.edit-row", { state: "detached", timeout: 15000 });
 
       await applyApprovalAction(page, "mapping", mappingEditSource, "Approve");
 
@@ -375,6 +508,60 @@ async function main() {
       await page.getByRole("button", { name: "Apply filters" }).click();
       await page.waitForURL((url) => url.pathname === "/audit" && url.searchParams.get("action") === "approve", { timeout: 15000 });
       await waitForBodyText(page, "approve");
+    });
+
+    await runStep("candidates-batch-history-detail-export", async () => {
+      const batchData = await createUiCandidateBatch(env.DATABASE_URL, {
+        stamp,
+        conflictSourceValue: mappingEditSource,
+        conflictTargetValue: mappingEditTargetV2,
+      });
+
+      await page.goto("/candidates", { waitUntil: "domcontentloaded" });
+      await settleClientPage(page);
+      await waitForBodyText(page, "Candidate Review");
+      await page.getByRole("button", { name: "Batch history" }).click();
+      await waitForBodyText(page, batchData.sourceName);
+
+      let historyRow = page.locator("table tbody tr").filter({ hasText: batchData.sourceName }).first();
+      await historyRow.getByRole("button", { name: "View details" }).click();
+      await waitForBodyText(page, batchData.batchId);
+      await waitForBodyText(page, "Conflict samples");
+      await waitForBodyText(page, "pending conflicts");
+      await waitForBodyText(page, "Conflict detected during trusted auto-promote dry run");
+      await waitForBodyText(page, batchData.conflictSourceValue);
+      await waitForBodyText(page, batchData.conflictTargetValue);
+
+      await historyRow.getByRole("button", { name: "Open batch" }).click();
+      await waitForBodyText(page, `Showing only candidates from batch ${batchData.batchId}.`);
+      await waitForBodyText(page, batchData.promotableSourceValue);
+
+      const promoteRow = page.locator("table tbody tr").filter({ hasText: batchData.promotableSourceValue }).first();
+      await promoteRow.getByRole("button", { name: "Promote" }).click();
+      await waitForBodyTextMissing(page, batchData.promotableSourceValue, 20000);
+      await waitForBodyText(page, batchData.conflictSourceValue);
+
+      await page.getByRole("button", { name: "Batch history" }).click();
+      await waitForBodyText(page, batchData.sourceName);
+      historyRow = page.locator("table tbody tr").filter({ hasText: batchData.sourceName }).first();
+      await historyRow.getByRole("button", { name: "View details" }).click();
+      await waitForBodyText(page, "manual promotes");
+      await waitForBodyText(page, "Promoted 1");
+
+      const exportPath = path.join(artifactDir, `ui-batch-export-${stamp}.json`);
+      const exportedBatch = await waitForDownloadJson(
+        page,
+        async () => {
+          await historyRow.getByRole("button", { name: "Export batch" }).click();
+        },
+        exportPath,
+      );
+
+      ensure(exportedBatch.ok === true, "Batch export response is not ok");
+      ensure(exportedBatch.batchId === batchData.batchId, "Batch export returned the wrong batch ID");
+      ensure(exportedBatch.counts?.mappings === 1, "Batch export should include one promoted mapping");
+      ensure(exportedBatch.files?.["mappings.csv"]?.includes(batchData.promotableSourceValue), "Batch export mappings.csv is missing the promoted candidate");
+      ensure(!exportedBatch.files?.["mappings.csv"]?.includes(batchData.conflictSourceValue), "Batch export should not include unresolved conflicting candidates");
     });
 
     await runStep("imports-demo-and-upload", async () => {

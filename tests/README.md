@@ -16,6 +16,9 @@ npm run e2e:nondestructive
 
 # Client entity comprehensive asset pack (21 workflows + 3 import scenarios)
 npm run e2e:client-asset
+
+# Browser-visible admin workflows, including candidate batch history/detail/export
+npm run e2e:ui-workflows
 ```
 
 ### Global Scanner (Pre-Demo/Release)
@@ -23,7 +26,7 @@ npm run e2e:client-asset
 npm run test:scan
 ```
 
-Executes all three suites in sequence and generates a GO/NO_GO report to `reports/test-scan-latest.json`.
+Executes all four suites in sequence and generates a GO/NO_GO report to `reports/test-scan-latest.json`.
 
 **Expected output:**
 ```json
@@ -33,7 +36,8 @@ Executes all three suites in sequence and generates a GO/NO_GO report to `report
   "steps": [
     { "script": "typecheck", "ok": true, "durationMs": 2600 },
     { "script": "e2e:nondestructive", "ok": true, "durationMs": 9800 },
-    { "script": "e2e:client-asset", "ok": true, "durationMs": 16200 }
+    { "script": "e2e:client-asset", "ok": true, "durationMs": 16200 },
+    { "script": "e2e:ui-workflows", "ok": true, "durationMs": 210000 }
   ]
 }
 ```
@@ -65,11 +69,22 @@ Executes all three suites in sequence and generates a GO/NO_GO report to `report
     3. Invalid CSV preview → Error/duplicate detection shown
   - **Auto cleanup:** Deletes CAS_ prefixed records before/after
 
+### [scripts/e2e-ui-workflows.mjs](../scripts/e2e-ui-workflows.mjs)
+- **Purpose:** Browser-visible admin regression suite with Playwright
+- **Coverage:**
+  - Login/logout, theme toggle, and language persistence
+  - Help page navigation and protected-route checks
+  - Create, approve, reject, and non-destructive replacement from the browser UI
+  - Imports from browser UI
+  - Candidate `Batch history` interactions from the browser UI
+  - Batch analytics detail with conflicts and deferred auto-promote evidence
+  - Batch export download and content validation
+
 ### [scripts/test-scanner.mjs](../scripts/test-scanner.mjs)
 - **Purpose:** Global validation gate for demos/releases
 - **Process:**
   1. Server health check via `/api/health/db`
-  2. Sequential execution: typecheck → e2e:nondestructive → e2e:client-asset
+  2. Sequential execution: typecheck → e2e:nondestructive → e2e:client-asset → e2e:ui-workflows
   3. Stops on first failure
   4. Generates JSON report
 
@@ -116,6 +131,8 @@ Fails if overall status is not GO.
    npm run e2e:nondestructive
    # or
    npm run e2e:client-asset
+  # or
+  npm run e2e:ui-workflows
    ```
 
 3. **Inspect latest report:**
@@ -150,9 +167,10 @@ Expected durations (on local machine):
 - typecheck: ~2.6s
 - e2e:nondestructive: ~9.8s
 - e2e:client-asset: ~16.2s
-- **Total:** ~28.6s
+- e2e:ui-workflows: ~3-4 min
+- **Total:** ~4-5 min
 
-Alert if total duration exceeds 45s (indicates performance regression).
+Alert if total duration exceeds 6 min (indicates performance regression).
 
 ## See Also
 
