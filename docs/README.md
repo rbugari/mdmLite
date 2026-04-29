@@ -8,7 +8,7 @@ La documentacion vigente de MDM Lite queda consolidada en estos documentos:
 1. **product-definition.md** - Definicion del producto, alcance, posicionamiento y limite funcional.
 2. **current-state-and-contracts.md** - Estado real implementado hoy, contrato tecnico SQL y API.
 3. **prd-v2-operational-hardening.md** - PRD v2 cerrado, fases completadas y sign-off (2026-04-15).
-4. **future-roadmap.md** - Plan futuro consolidado, releases v3+, direccion de evolucion.
+4. **future-roadmap.md** - Plan futuro consolidado, releases v1.1+, direccion de evolucion.
 5. **release-trial-readiness-plan.md** - Plan ejecutable para cerrar la primera release instalable y operable.
 6. **product-trial-scope.md** - Alcance y narrativa del primer trial controlado.
 7. **v0.3-candidate-review-draft.md** - Borrador de la siguiente fase funcional despues de release readiness.
@@ -21,8 +21,8 @@ La documentacion vigente de MDM Lite queda consolidada en estos documentos:
 14. **functional-use-cases-and-examples.md** - Casos de uso y ejemplos concretos para entender cada funcionalidad actual.
 
 ### Testing & Operations
-5. **testing/README.md** - Guia completa de testing con cuatro suites (typecheck, e2e:nondestructive, e2e:client-asset, test:scan).
-6. **testing/README.md / Remote Foundation Validation** - Flujo para validar DB PostgreSQL remota efimera y smoke operativo.
+1. **testing/README.md** - Guia completa de testing con las suites `typecheck`, `e2e:nondestructive`, `e2e:client-asset`, `e2e:ui-workflows` y el scanner `test:scan`.
+2. **testing/README.md / Remote Foundation Validation** - Flujo para validar DB PostgreSQL remota efimera y smoke operativo.
 
 ## Orden de lectura recomendado
 
@@ -64,7 +64,7 @@ El objetivo es dejar:
 
 Todo lo demas se considera material reemplazado por esta consolidacion.
 
-## v2 Status (2026-04-15)
+## v2 Status (2026-04-29)
 
 ✅ **PRODUCTION READY**
 - Fases 1-3 completadas
@@ -73,4 +73,6 @@ Todo lo demas se considera material reemplazado por esta consolidacion.
 
 **CI/CD:** Enabled en .github/workflows/test.yml
 
-**Last verification:** `npm run test:scan` → GO (30.5s)
+**CI baseline:** GitHub Actions aligned with explicit test env + Playwright Chromium install
+
+**Last verification:** `npm run test:scan` → GO (270.3s)

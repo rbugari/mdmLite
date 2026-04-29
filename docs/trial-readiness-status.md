@@ -2,7 +2,7 @@
 
 ## Status Snapshot
 
-Date: 2026-04-17
+Date: 2026-04-29
 
 Current decision: trial-ready for the first controlled Windows-first trial.
 
@@ -31,8 +31,15 @@ Reason: the installable baseline now passes the official install/start path, rem
 
 1. `typecheck` passed
 2. `e2e:nondestructive` passed
-3. `e2e:client-asset` passed after normalizing local runners to `127.0.0.1`
-4. `e2e:ui-workflows` passed after fixing local production login persistence
+3. `e2e:client-asset` passed with env-driven admin login and DB connectivity
+4. `e2e:ui-workflows` passed with browser validation for batch history, analytics detail, and export-by-batch
+5. `test:scan` passed end-to-end with all four suites in `GO`
+
+### CI Validation
+
+1. GitHub Actions workflow now installs Playwright Chromium before the browser suite
+2. CI test job now passes explicit admin credentials, auth secret, and PostgreSQL env vars instead of depending on a local `.env`
+3. test scripts now accept `process.env` when `.env` is absent, which aligns local and CI execution
 
 ## Blocking Failures
 
@@ -43,7 +50,8 @@ There are no remaining blocking failures for the controlled trial baseline in th
 Current persisted result:
 
 1. `reports/test-scan-latest.json` is `GO`
-2. passed steps:
+2. total duration is `270335ms` (~4.5 min)
+3. passed steps:
    - `typecheck`
    - `e2e:nondestructive`
    - `e2e:client-asset`
