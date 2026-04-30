@@ -1,6 +1,9 @@
 "use client";
 
+import { Download, Eye, FolderOpen, Check, X } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
+
+import { TableActionButton, TableActionGroup } from "@/components/table-action-control";
 
 type Candidate = {
   id: string;
@@ -645,34 +648,26 @@ export function CandidatesPageClient() {
                         </div>
                       </td>
                       <td>
-                        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                          <button
-                            type="button"
-                            className="btn btn--secondary btn--sm"
-                            onClick={() => setSelectedBatchId(batch.batchId)}
-                          >
-                            View details
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn--secondary btn--sm"
+                        <TableActionGroup>
+                          <TableActionButton label="View details" icon={Eye} onClick={() => setSelectedBatchId(batch.batchId)} />
+                          <TableActionButton
+                            label={exportingBatchId === batch.batchId ? "Exporting batch" : "Export batch"}
+                            icon={Download}
+                            busy={exportingBatchId === batch.batchId}
                             disabled={exportingBatchId === batch.batchId}
                             onClick={() => void handleExportBatch(batch.batchId)}
-                          >
-                            {exportingBatchId === batch.batchId ? "Exporting…" : "Export batch"}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn--primary btn--sm"
+                          />
+                          <TableActionButton
+                            label="Open batch"
+                            icon={FolderOpen}
+                            tone="success"
                             onClick={() => {
                               setBatchFilter(batch.batchId);
                               setStatusFilter(batch.reviewState === "completed" ? "all" : "pending");
                               setTab("list");
                             }}
-                          >
-                            Open batch
-                          </button>
-                        </div>
+                          />
+                        </TableActionGroup>
                       </td>
                     </tr>
                   ))}
@@ -972,30 +967,28 @@ export function CandidatesPageClient() {
                           </td>
                           <td>
                             {item.status === "pending" && (
-                              <span style={{ display: "flex", gap: "0.5rem" }}>
-                                <button
-                                  type="button"
-                                  className="btn btn--primary btn--sm"
+                              <TableActionGroup>
+                                <TableActionButton
+                                  label="Promote"
+                                  icon={Check}
+                                  tone="success"
                                   disabled={processingId === item.id || bulkBusy}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     void handlePromote(item.id);
                                   }}
-                                >
-                                  Promote
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn--danger btn--sm"
+                                />
+                                <TableActionButton
+                                  label="Reject"
+                                  icon={X}
+                                  tone="danger"
                                   disabled={processingId === item.id || bulkBusy}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     void handleReject(item.id);
                                   }}
-                                >
-                                  Reject
-                                </button>
-                              </span>
+                                />
+                              </TableActionGroup>
                             )}
                             {item.status === "promoted" && item.promoted_record_id && (
                               <span className="muted-text" style={{ fontSize: "0.8rem" }}>

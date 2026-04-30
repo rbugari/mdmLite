@@ -11,18 +11,19 @@ Send these files and folders:
 1. `src/`
 2. `scripts/`
 3. `db/`
-4. `docs/`
-5. `data/` if the demo scenario is part of the trial
-6. `tests/` if the trial operator may need validation context
-7. `package.json`
-8. `package-lock.json`
-9. `README.md`
-10. `next.config.ts`
-11. `tsconfig.json`
-12. `eslint.config.mjs`
-13. `.env.example`
-14. `middleware.ts`
-15. `next-env.d.ts`
+4. `docs/windows-installation.md`
+5. `docs/trial-install-access-and-db-guide.md`
+6. `package.json`
+7. `package-lock.json`
+8. `README.md`
+9. `next.config.ts`
+10. `tsconfig.json`
+11. `eslint.config.mjs`
+12. `.env.example`
+13. `middleware.ts`
+14. `next-env.d.ts`
+15. `LEER-PRIMERO-INSTALACION.md`
+16. `LEER-DETALLADO-INSTALACION.md`
 
 ## Do Not Include
 
@@ -35,6 +36,10 @@ Do not send these local artifacts:
 5. local logs
 6. `.tsbuildinfo`
 7. `.git/`
+8. `tests/`
+9. `reports/`
+10. `handoff/`
+11. `data/` unless the demo dataset is explicitly part of the trial
 
 ## Minimal Operator Instructions
 
@@ -58,3 +63,16 @@ Include these reports in the package or as separate evidence:
 ## Packaging Note
 
 The current baseline is source delivery plus documented scripts. It is not yet an MSI, service installer, or bundled runtime package.
+
+To assemble the package consistently, run:
+
+```bat
+scripts\windows\create-trial-package.bat
+```
+
+That produces the staging folder and the delivery ZIP under `dist\trial-package\`.
+
+The generated package root also includes:
+
+1. `LEER-PRIMERO-INSTALACION.md`
+2. `LEER-DETALLADO-INSTALACION.md`

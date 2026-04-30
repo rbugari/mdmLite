@@ -80,6 +80,7 @@ Run these in order:
 
 ```bat
 scripts\windows\configure-production.bat
+scripts\windows\check-db-connection.bat
 scripts\windows\install-production.bat
 scripts\windows\start-production.bat
 scripts\windows\smoke-test.bat
@@ -88,8 +89,25 @@ scripts\windows\smoke-test.bat
 Use this phased path when:
 
 1. you want to review `.env` first
-2. you want to separate install from startup
-3. you want a repeatable maintenance flow after the first run
+2. you want to validate PostgreSQL before schema apply and build
+3. you want to separate install from startup
+4. you want a repeatable maintenance flow after the first run
+
+### Recommended PostgreSQL Validation Before Install
+
+After creating `.env`, run:
+
+```bat
+scripts\windows\check-db-connection.bat
+```
+
+Expected result:
+
+1. JSON with `ok: true`
+2. the expected host, port, database, and user
+3. the expected SSL mode
+
+If that check fails, do not continue with install until `DATABASE_URL` and `DATABASE_SSL_MODE` are corrected.
 
 ### After Installation
 

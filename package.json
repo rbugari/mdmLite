@@ -10,6 +10,7 @@
     "env:check": "node scripts/validate-runtime-env.mjs",
     "foundation:validate-remote": "node scripts/validate-remote-foundation.mjs",
     "smoke:prod": "node scripts/smoke-production.mjs",
+    "db:check": "node scripts/check-postgres-connection.mjs",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:scan": "node scripts/test-scanner.mjs",

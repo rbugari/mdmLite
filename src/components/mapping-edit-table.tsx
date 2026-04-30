@@ -1,8 +1,10 @@
 "use client";
 
+import { History, Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { TableActionButton, TableActionGroup, TableActionLink } from "@/components/table-action-control";
 import { useUiPreferences } from "@/components/ui-preferences-provider";
 import { getCopy } from "@/lib/copy";
 import type { ActiveMapping } from "@/lib/mdm";
@@ -123,12 +125,14 @@ function FragmentRow({ item, editingId, savingId, language, status, onStartEdit,
         <td>{item.rule_set_code}</td>
         <td>{item.valid_from}</td>
         <td>
-          <a className="table-action" href={`/audit?recordId=${item.id}`}>
-            History
-          </a>
-          <button type="button" className="table-action" onClick={isEditing ? onCancelEdit : onStartEdit}>
-            {isEditing ? t.close : t.edit}
-          </button>
+          <TableActionGroup>
+            <TableActionLink label="History" icon={History} href={`/audit?recordId=${item.id}`} />
+            <TableActionButton
+              label={isEditing ? t.close : t.edit}
+              icon={isEditing ? X : Pencil}
+              onClick={isEditing ? onCancelEdit : onStartEdit}
+            />
+          </TableActionGroup>
         </td>
       </tr>
       {isEditing ? (

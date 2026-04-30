@@ -13,6 +13,35 @@ This baseline is designed for:
 
 It is not yet a one-click installer. It is the controlled first step toward that outcome.
 
+## Packaging For Delivery
+
+For a controlled trial, the current recommended deliverable is a ZIP package, not an MSI.
+
+Generate it with:
+
+```bat
+scripts\windows\create-trial-package.bat
+```
+
+That command creates:
+
+1. a staging folder under `dist\trial-package\mdm-lite-trial`
+2. a distributable ZIP under `dist\trial-package\mdm-lite-windows-trial.zip`
+
+The ZIP is intended for an operator who will then run `scripts\windows\install-and-start.bat` on the target machine.
+
+For the operator-facing steps, hand off:
+
+1. `handoff/windows-operator-step-by-step-es.md`
+2. `handoff/windows-quick-start-es.md`
+2. `docs/windows-installation.md`
+3. `docs/trial-install-access-and-db-guide.md`
+
+The generated ZIP also places these operator guides at the package root with prominent names:
+
+1. `LEER-PRIMERO-INSTALACION.md`
+2. `LEER-DETALLADO-INSTALACION.md`
+
 ## Prerequisites
 
 - Windows 10 or newer
@@ -89,8 +118,21 @@ That script performs five steps:
 1. creates or repairs `.env` when required
 2. validates required runtime environment variables
 3. installs dependencies
-4. applies the PostgreSQL schema
-5. creates the production build and verifies `.next/standalone/server.js`
+4. verifies PostgreSQL connectivity with the configured SSL mode
+5. applies the PostgreSQL schema
+6. creates the production build and verifies `.next/standalone/server.js`
+
+If you want to validate the database connection before the full install, run:
+
+```bat
+scripts\windows\check-db-connection.bat
+```
+
+That preflight check is the fastest way to confirm that:
+
+1. `DATABASE_URL` points to the correct host, port, database, and user
+2. `DATABASE_SSL_MODE` matches the target PostgreSQL SSL posture
+3. the target machine can reach the PostgreSQL server over the network
 
 ## Startup
 
@@ -130,3 +172,13 @@ Not implemented yet:
 - one-click installer packaging
 - bundled Node runtime
 - automatic upgrade/rollback flow
+
+## Recommended Next Installer Milestone
+
+If you need a real Windows installer after the trial baseline, the next pragmatic step is:
+
+1. keep `install-and-start.bat` as the install engine
+2. wrap the delivery ZIP with an EXE installer
+3. use the EXE only to unpack files, create shortcuts, and launch the existing install flow
+
+For this project stage, that is lower risk than jumping directly to a full MSI with service management.

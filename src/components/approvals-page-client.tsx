@@ -1,6 +1,9 @@
 "use client";
 
+import { Ban, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { TableActionButton, TableActionGroup } from "@/components/table-action-control";
 
 type PendingItem = {
   id: string;
@@ -163,32 +166,28 @@ export function ApprovalsPageClient() {
                       <td>{item.status}</td>
                       <td>{item.updated_at}</td>
                       <td>
-                        <div className="form-actions">
-                          <button
-                            type="button"
-                            className="table-action"
+                        <TableActionGroup>
+                          <TableActionButton
+                            label="Approve"
+                            icon={Check}
+                            tone="success"
                             disabled={isProcessing}
                             onClick={() => void runAction(item, "approve")}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            className="table-action"
+                          />
+                          <TableActionButton
+                            label="Reject"
+                            icon={X}
+                            tone="danger"
                             disabled={isProcessing}
                             onClick={() => void runAction(item, "reject")}
-                          >
-                            Reject
-                          </button>
-                          <button
-                            type="button"
-                            className="table-action"
+                          />
+                          <TableActionButton
+                            label="Inactivate"
+                            icon={Ban}
                             disabled={isProcessing}
                             onClick={() => void runAction(item, "inactivate")}
-                          >
-                            Inactivate
-                          </button>
-                        </div>
+                          />
+                        </TableActionGroup>
                       </td>
                     </tr>
                   );

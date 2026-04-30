@@ -127,6 +127,11 @@ try {
   console.log("[CONFIG] Configuracion inicial de MDM Lite para Windows");
   console.log("[CONFIG] Enter mantiene el valor actual o el default mostrado.");
   console.log("[CONFIG] APP_AUTH_SECRET se genera automaticamente si no existe.\n");
+  console.log("[DB] Necesitas una URL PostgreSQL con este formato:");
+  console.log("[DB] postgresql://usuario:password@host:5432/base?sslmode=verify-full");
+  console.log("[DB] Usa DATABASE_SSL_MODE=require para PostgreSQL gestionado con certificado valido.");
+  console.log("[DB] Usa DATABASE_SSL_MODE=disable solo en entornos controlados sin SSL.");
+  console.log("[DB] Usa DATABASE_SSL_MODE=no-verify solo como fallback temporal si el certificado no valida.\n");
 
   baseValues.DATABASE_URL = await promptWithDefault(rl, "DATABASE_URL", baseValues.DATABASE_URL, {
     required: true,
